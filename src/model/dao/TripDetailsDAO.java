@@ -25,9 +25,9 @@ public class TripDetailsDAO implements BaseDAO<List<OvernightStay>> {
 
             ResultSet rs = stmt.executeQuery();
             List<OvernightStay> tripDetails = new ArrayList<>();
-            OvernightStay overnightStay;
+
             while (rs.next()) {
-                overnightStay = new OvernightStay(
+                OvernightStay overnightStay = new OvernightStay(
                         rs.getDate("data_inizio").toLocalDate(),
                         rs.getDate("data_fine").toLocalDate()
                 );
@@ -37,7 +37,18 @@ public class TripDetailsDAO implements BaseDAO<List<OvernightStay>> {
                                 rs.getString("paese")
                         )
                 );
-                overnightStay.setHotel(new Hotel(rs.getString("albergo")));
+
+                // --- BLOCCO MODIFICATO ---
+                // Controlliamo se il nome dell'albergo è NULL prima di usarlo
+                String hotelName = rs.getString("albergo");
+                if (hotelName != null) {
+                    overnightStay.setHotel(new Hotel(hotelName));
+                } else {
+                    // Se è NULL, creiamo un oggetto Hotel segnaposto
+                    overnightStay.setHotel(new Hotel("Albergo non ancora assegnato"));
+                }
+                // --- FINE BLOCCO MODIFICATO ---
+
                 tripDetails.add(overnightStay);
             }
             return tripDetails;

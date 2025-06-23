@@ -5,24 +5,73 @@ import model.OvernightStay;
 import model.Place;
 import model.Trip;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.sql.Date;
+import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class SegreteriaView extends View {
 
-    private final Scanner scanner;
+    private final BufferedReader reader;
 
     public SegreteriaView() {
-        this.scanner = new Scanner(System.in).useDelimiter("\n");
+        this.reader = new BufferedReader(new InputStreamReader(System.in));
     }
 
-    public int showMenu() {
+    // --- METODI HELPER PRIVATI E ROBUSTI ---
+
+    private String readLineFromUser() throws IOException {
+        String line;
+        while ((line = reader.readLine()) != null && line.trim().isEmpty()) {
+            // Ignora le righe vuote e continua a leggere
+        }
+        return line;
+    }
+
+    private LocalDate parseDateFromUser() throws IOException {
+        while (true) {
+            String dateString = readLineFromUser();
+            try {
+                SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+                format.setLenient(false);
+                java.util.Date parsedDate = format.parse(dateString);
+                return parsedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            } catch (ParseException e) {
+                System.err.print("Formato data non valido. Riprova (gg/mm/aaaa): ");
+            }
+        }
+    }
+
+    private int parseIntFromUser() throws IOException {
+        while (true) {
+            String input = readLineFromUser();
+            try {
+                return Integer.parseInt(input);
+            } catch (NumberFormatException e) {
+                System.err.print("Input non valido. Inserire un numero intero: ");
+            }
+        }
+    }
+
+    private double parseDoubleFromUser() throws IOException {
+        while (true) {
+            String input = readLineFromUser();
+            try {
+                return Double.parseDouble(input);
+            } catch (NumberFormatException e) {
+                System.err.print("Input non valido. Inserire un numero: ");
+            }
+        }
+    }
+
+    public int showMenu() throws IOException {
         System.out.println("***********************************");
-        System.out.println("*     Agenzia di viaggi - Menù    *");
+        System.out.println("* Agenzia di viaggi - Menù    *");
         System.out.println("***********************************\n");
         System.out.println("*** Selezionare un'operazione ***\n");
         System.out.println("1)  Crea un nuovo viaggio");
@@ -42,128 +91,112 @@ public class SegreteriaView extends View {
         int choice;
         do {
             System.out.print("Inserire il numero dell'opzione: ");
-            choice = scanner.nextInt();
+            choice = parseIntFromUser();
         } while (choice < 1 || choice > 13);
         return choice;
     }
 
-    public Trip getTripValues() {
-        scanner.nextLine(); // Consuma il newline rimasto
+    public Trip getTripValues() throws IOException {
         System.out.print("Inserire il titolo del viaggio: ");
-        String title = scanner.nextLine();
+        String title = readLineFromUser();
         System.out.print("Inserire la data di partenza (gg/mm/aaaa): ");
-        String startDateString = scanner.next();
-        LocalDate startDate = parseStringDate(startDateString);
+        LocalDate startDate = parseDateFromUser();
         System.out.print("Inserire la data del rientro (gg/mm/aaaa): ");
-        String returnDateString = scanner.next();
-        LocalDate returnDate = parseStringDate(returnDateString);
+        LocalDate returnDate = parseDateFromUser();
         System.out.print("Inserire il costo (€): ");
-        Double price = scanner.nextDouble();
-
+        double price = parseDoubleFromUser();
         return new Trip(title, startDate, returnDate, price);
     }
 
-    public int getOvernightsNumber() {
+    public int getOvernightsNumber() throws IOException {
         int n;
         do {
             System.out.print("Inserire il numero di pernottamenti: ");
-            n = scanner.nextInt();
-            scanner.nextLine(); // Consuma il resto della riga (il carattere '\n')
+            n = parseIntFromUser();
         } while (n < 0);
         return n;
     }
 
-    public OvernightStay getOvernightData() {
+    public OvernightStay getOvernightData() throws IOException {
+
         System.out.print("Inserire la data di inizio pernottamento (gg/mm/aaaa): ");
-        LocalDate startDate = parseStringDate(scanner.nextLine());
+        LocalDate startDate = parseDateFromUser();
         System.out.print("Inserire la data di fine pernottamento (gg/mm/aaaa): ");
-        LocalDate endDate = parseStringDate(scanner.nextLine());
+        LocalDate endDate = parseDateFromUser();
+        if (endDate.isBefore(startDate)) {
+            System.err.println("Errore: La data di fine non può precedere la data di inizio. Reinserire i dati del pernottamento.");
+            return getOvernightData();
+        }
         return new OvernightStay(startDate, endDate);
     }
 
-    public Hotel getHotelValues() {
-        System.out.print("Inserire il nome dell'albergo: ");
-        String name = scanner.nextLine();
-        System.out.print("Inserire il nome del referente: ");
-        String referee = scanner.nextLine();
-        System.out.print("Inserire la capienza dell'albergo: ");
-        int capacity = scanner.nextInt();
-        System.out.print("Inserire la via dell'albergo: ");
-        String street = scanner.nextLine();
-        System.out.print("Inserire il civico dell'albergo: ");
-        String civic = scanner.nextLine();
-        System.out.print("Inserire il codice postale dell'albergo: ");
-        String cp = scanner.nextLine();
-        System.out.print("Inserire l'email dell'albergo: ");
-        String email = scanner.nextLine();
-        System.out.print("Inserire il numero di telefono dell'albergo: ");
-        String telephone = scanner.nextLine();
-        System.out.print("Inserire il fax dell'albergo (opzionale): ");
-        String fax = scanner.nextLine();
-
-        return new Hotel(name, referee, capacity, street, civic, cp, email, telephone, fax);
-    }
-
-    public String getPlaceName() {
+    public Place getPlaceValues() throws IOException {
         System.out.print("Inserire il nome della località: ");
-        return scanner.nextLine();
-    }
-
-    public Place getPlaceValues() {
-        System.out.print("Inserire il nome della località: ");
-        String name = scanner.nextLine();
+        String name = readLineFromUser();
         System.out.print("Inserire il paese della località: ");
-        String country = scanner.nextLine();
+        String country = readLineFromUser();
         return new Place(name, country);
     }
 
-    public Date getDate() {
-        /*System.out.print("Inserire una data (gg/mm/aaaa): ");
-        String stringDate = scanner.next("^[0-9]{2}/[0-9]{2}/[0-9]{4}$");*/
-        // return Date.valueOf(parseStringDate(stringDate));
-        // Modifica:
-        System.out.print("Inserire una data (aaaa/mm/gg): ");
-        String stringDate = scanner.next();
-        return Date.valueOf(stringDate);
+    public Hotel getHotelValues() throws IOException {
+        System.out.print("Inserire il nome dell'albergo: ");
+        String name = readLineFromUser();
+        System.out.print("Inserire il nome del referente: ");
+        String referee = readLineFromUser();
+        System.out.print("Inserire la capienza dell'albergo: ");
+        int capacity = parseIntFromUser();
+        System.out.print("Inserire la via dell'albergo: ");
+        String street = readLineFromUser();
+        System.out.print("Inserire il civico dell'albergo: ");
+        String civic = readLineFromUser();
+        System.out.print("Inserire il codice postale dell'albergo: ");
+        String cp = readLineFromUser();
+        System.out.print("Inserire l'email dell'albergo: ");
+        String email = readLineFromUser();
+        System.out.print("Inserire il numero di telefono dell'albergo: ");
+        String telephone = readLineFromUser();
+        System.out.print("Inserire il fax dell'albergo (opzionale): ");
+        String fax = readLineFromUser();
+        return new Hotel(name, referee, capacity, street, civic, cp, email, telephone, fax);
     }
 
-    public String getTripTitle() {
+    public LocalDate askForDate(String message) throws IOException {
+        System.out.print(message);
+        return parseDateFromUser();
+    }
+
+    public String getPlaceName() throws IOException {
+        System.out.print("Inserire il nome della località: ");
+        return readLineFromUser();
+    }
+
+    public String getTripTitle() throws IOException {
         System.out.print("Inserire il titolo del viaggio: ");
-        return scanner.next();
+        return readLineFromUser();
     }
 
     public List<String> getBusPlates() throws IOException {
         List<String> plates = new ArrayList<>();
         String input;
-        do {
-            System.out.print("Inserire la targa di un autobus (q per uscire): ");
-            input = scanner.next();
-            if (!input.equals("q"))
-                plates.add(input);
-        } while (!input.equals("q"));
+        System.out.println("Inserire le targhe degli autobus (inserire 'q' per terminare):");
+        while (!(input = readLineFromUser()).equals("q")) {
+            if (!input.trim().isEmpty()) plates.add(input);
+        }
         return plates;
     }
 
     public int getHotelCode() throws IOException {
-        int input;
-        do {
-            System.out.print("Inserire il codice del'albergo scelto': ");
-            input = scanner.nextInt();
-        } while (input < 0);
-        return input;
+        System.out.print("Inserire il codice dell'albergo scelto: ");
+        return parseIntFromUser();
     }
 
-    public int getParticipants() {
-        int n;
-        do {
-            System.out.print("Inserire il numero persone per la prenotazione: ");
-            n = scanner.nextInt();
-        } while (n < 1);
-        return n;
+    public int getParticipants() throws IOException {
+        System.out.print("Inserire il numero di persone per la prenotazione: ");
+        return parseIntFromUser();
     }
 
-    public int getBookingCode() {
-        System.out.print("Inserire il codice della prenotazione ");
-        return scanner.nextInt();
+    public int getBookingCode() throws IOException {
+        System.out.print("Inserire il codice della prenotazione: ");
+        return parseIntFromUser();
     }
 }

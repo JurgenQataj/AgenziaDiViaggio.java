@@ -8,6 +8,7 @@ import view.SegreteriaView;
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.List;
 
 public class SegreteriaController implements Controller {
@@ -28,10 +29,11 @@ public class SegreteriaController implements Controller {
             throw new RuntimeException("Errore nel cambio di ruolo", e);
         }
 
-        int choice;
-        do {
-            choice = segreteriaView.showMenu();
-            try {
+        int choice = 0;
+        try {
+            do {
+                choice = segreteriaView.showMenu();
+                // Questo è lo switch completo e corretto con tutti i case
                 switch (choice) {
                     case 1 -> createTrip();
                     case 2 -> insertNewPlace();
@@ -46,19 +48,17 @@ public class SegreteriaController implements Controller {
                     case 11 -> bookTrip();
                     case 12 -> cancelBooking();
                     case 13 -> segreteriaView.showMessage("Sessione terminata");
-                    default -> throw new RuntimeException("Opzione non valida");
+                    default -> segreteriaView.showMessage("Opzione non valida");
                 }
-            } catch (SQLException | DatabaseException | IOException e) {
-                System.err.println(e.getMessage());
-            }
-        } while (choice != 13);
+            } while (choice != 13);
+        } catch (SQLException | DatabaseException | IOException e) {
+            System.err.println("Si è verificato un errore critico: " + e.getMessage());
+        }
     }
 
-    private void createTrip() throws SQLException, DatabaseException {
+    private void createTrip() throws SQLException, DatabaseException, IOException {
         Trip trip = segreteriaView.getTripValues();
-        InsertTripDAO dao = new InsertTripDAO();
-        dao.execute(trip);
-
+        new InsertTripDAO().execute(trip);
         segreteriaView.showMessage("Creazione del viaggio avvenuta con successo.");
         int n = segreteriaView.getOvernightsNumber();
         for (int i = 0; i < n; i++) {
@@ -66,35 +66,40 @@ public class SegreteriaController implements Controller {
         }
     }
 
-    private void insertOvernightStay(Trip trip) throws DatabaseException {
+    private void insertOvernightStay(Trip trip) throws DatabaseException, IOException {
         OvernightStay overnightStay = segreteriaView.getOvernightData();
+        if (overnightStay == null) return;
         overnightStay.setTrip(trip);
         String placeName = segreteriaView.getPlaceName();
-        overnightStay.setPlace(new GetPlaceDAO().execute(placeName));
-        InsertOvernightStayDAO insertOvernightStayDAO = new InsertOvernightStayDAO();
-        insertOvernightStayDAO.execute(overnightStay);
+        Place place = new Place();
+        place.setName(placeName);
+        overnightStay.setPlace(place);
+        new InsertOvernightStayDAO().execute(overnightStay);
+        segreteriaView.showMessage("Pernottamento inserito con successo per la località: " + placeName);
     }
 
-    private void insertNewPlace() throws DatabaseException {
+    private void insertNewPlace() throws DatabaseException, IOException {
         Place place = segreteriaView.getPlaceValues();
         new InsertPlaceDAO().execute(place);
     }
 
-    private void insertNewHotel() throws DatabaseException {
+    private void insertNewHotel() throws DatabaseException, IOException {
         Hotel hotel = segreteriaView.getHotelValues();
-        hotel.setPlace(new GetPlaceDAO().execute(segreteriaView.getPlaceName()));
-
-        InsertHotelDAO insertHotelDAO = new InsertHotelDAO();
-        insertHotelDAO.execute(hotel);
+        String placeName = segreteriaView.getPlaceName();
+        Place place = new Place();
+        place.setName(placeName);
+        hotel.setPlace(place);
+        new InsertHotelDAO().execute(hotel);
     }
 
-    private void listTrips() throws DatabaseException {
-        Date date = segreteriaView.getDate();
+    private void listTrips() throws DatabaseException, IOException {
+        LocalDate localDate = segreteriaView.askForDate("Inserire la data per filtrare i viaggi (gg/mm/aaaa): ");
+        Date date = Date.valueOf(localDate);
         List<Trip> trips = new ListTripsDAO().execute(date);
         segreteriaView.printObjects(trips);
     }
 
-    private void listTripDetails() throws DatabaseException {
+    private void listTripDetails() throws DatabaseException, IOException {
         String tripTitle = segreteriaView.getTripTitle();
         TripDetailsDAO detailsDAO = new TripDetailsDAO();
         segreteriaView.printObjects(detailsDAO.execute(tripTitle));
@@ -108,7 +113,7 @@ public class SegreteriaController implements Controller {
         segreteriaView.printObjects(new ListHotelsDAO().execute());
     }
 
-    private void generateReports() throws DatabaseException {
+    private void generateReports() throws DatabaseException, IOException {
         ReportDAO reportDAO = new ReportDAO();
         TripReport report = reportDAO.execute(segreteriaView.getTripTitle());
         segreteriaView.showMessage(report.toString());
@@ -123,14 +128,14 @@ public class SegreteriaController implements Controller {
 
     private void assignHotelForOvernightStay() throws IOException, DatabaseException {
         String title = segreteriaView.getTripTitle();
-        Date date = segreteriaView.getDate();
+        LocalDate localDate = segreteriaView.askForDate("Inserire la data del pernottamento (gg/mm/aaaa): ");
+        Date date = Date.valueOf(localDate);
         int code = segreteriaView.getHotelCode();
-
         AssignHotelDAO assignHotelDAO = new AssignHotelDAO();
         assignHotelDAO.execute(title, date, code);
     }
 
-    private void bookTrip() throws DatabaseException {
+    private void bookTrip() throws DatabaseException, IOException {
         String trip = segreteriaView.getTripTitle();
         int participants = segreteriaView.getParticipants();
         Booking booking = new Booking(trip, credentials.getUsername(), participants);
@@ -139,7 +144,7 @@ public class SegreteriaController implements Controller {
         segreteriaView.showMessage(String.format("Codice prenotazione: %d", booking.getCode()));
     }
 
-    private void cancelBooking() throws DatabaseException {
+    private void cancelBooking() throws DatabaseException, IOException {
         int code = segreteriaView.getBookingCode();
         CancelBookingDAO cancelBookingDAO = new CancelBookingDAO();
         cancelBookingDAO.execute(code);
