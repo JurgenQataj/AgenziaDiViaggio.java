@@ -2,14 +2,15 @@ package controller;
 
 import exceptions.DatabaseException;
 import model.LoginCredentials;
+import model.Role;
 import model.dao.LoginDAO;
 import view.LoginView;
+
+import java.sql.SQLException;
 
 public class LoginController implements Controller {
 
     private final LoginView loginView;
-
-    private LoginCredentials loginCredentials;
 
     public LoginController() {
         loginView = new LoginView();
@@ -17,17 +18,29 @@ public class LoginController implements Controller {
 
     @Override
     public void start() {
-        LoginCredentials credentials = this.loginView.authenticate();
-
-        try {
-            this.loginCredentials = new LoginDAO().execute(credentials.getUsername(), credentials.getPassword());
-        } catch (DatabaseException e) {
-            System.err.printf("Login error: %s%n", e.getMessage());
-        }
+        // Questo metodo è intenzionalmente vuoto perché la logica
+        // è ora gestita da AppController che chiama authenticateUser.
     }
 
-    public LoginCredentials
-    getLoginCredentials() {
-        return loginCredentials;
+    public LoginCredentials authenticateUser() {
+        LoginCredentials credentials = loginView.authenticate();
+        if (credentials == null) return null; // L'utente potrebbe aver interrotto
+
+        try {
+            LoginDAO loginDAO = new LoginDAO(credentials);
+            Role role = loginDAO.execute();
+
+            if (role != null) {
+                credentials.setRole(role);
+                loginView.showMessage("Login effettuato con successo come: " + role);
+                return credentials;
+            } else {
+                loginView.showMessage("Credenziali non valide. Riprova.");
+                return null;
+            }
+        } catch (SQLException e) {
+            loginView.printError(new DatabaseException(e.getMessage()));
+            return null;
+        }
     }
 }

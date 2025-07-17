@@ -1,8 +1,13 @@
 package controller;
 
 import exceptions.DatabaseException;
-import model.*;
-import model.dao.*;
+import model.LoginCredentials;
+import model.Role;
+import model.Trip;
+import model.dao.BookDAO;
+import model.dao.CancelBookingDAO;
+import model.dao.ConnectionFactory;
+import model.dao.ListTripsDAO;
 import view.ClienteView;
 
 import java.io.IOException;
@@ -23,52 +28,64 @@ public class ClienteController implements Controller {
 
     @Override
     public void start() {
-        int choice = 0;
-        // La clausola catch è stata corretta per non catturare più SQLException,
-        // che non viene mai lanciata direttamente nel blocco try.
         try {
-            do {
+            ConnectionFactory.changeRole(Role.CLIENTE);
+        } catch (Exception e) {
+            // Se il cambio ruolo fallisce, è un errore critico
+            throw new RuntimeException("Errore critico nell'impostare il ruolo del cliente", e);
+        }
+
+        int choice = 0;
+        do {
+            try {
                 choice = clienteView.showMenu();
                 switch (choice) {
-                    case 1 -> listTrips();
-                    case 2 -> listTripDetails();
-                    case 3 -> bookTrip();
-                    case 4 -> cancelBooking();
-                    case 5 -> clienteView.showMessage("Sessione terminata.");
+                    case 1 -> listAvailableTrips();
+                    case 2 -> bookTrip();
+                    case 3 -> cancelBooking();
+                    case 4 -> clienteView.showMessage("Sessione terminata. Arrivederci!");
                     default -> clienteView.showMessage("Opzione non valida.");
                 }
-            } while (choice != 5);
-        } catch (DatabaseException | IOException e) { // RIMOSSO SQLException da qui
-            System.err.println("Si è verificato un errore: " + e.getMessage());
+                // Questo blocco ora è corretto, perché i metodi chiamati sopra
+                // dichiarano che possono lanciare queste eccezioni.
+            } catch (SQLException e) {
+                clienteView.printError(new DatabaseException("Errore del database: " + e.getMessage()));
+            } catch (IOException e) {
+                clienteView.printError(new DatabaseException("Errore di input/output: " + e.getMessage()));
+            }
+        } while (choice != 4);
+    }
+
+    // Le firme dei metodi ora includono "throws SQLException"
+
+    private void listAvailableTrips() throws SQLException {
+        clienteView.showMessage("\n--- Lista dei Viaggi Disponibili ---");
+        List<Trip> trips = new ListTripsDAO(Date.valueOf(LocalDate.now())).execute();
+
+        if (trips.isEmpty()) {
+            clienteView.showMessage("Nessun viaggio disponibile al momento.");
+        } else {
+            clienteView.showMessage(String.format("%-5s %-40s %-15s %-15s %-10s", "ID", "TITOLO", "PARTENZA", "RIENTRO", "COSTO"));
+            clienteView.printObjects(trips);
         }
     }
 
-    // Le firme dei metodi che interagiscono con i DAO mantengono throws DatabaseException
-    private void listTrips() throws DatabaseException, IOException {
-        Date date = clienteView.getDate();
-        List<Trip> trips = new ListTripsDAO().execute(date);
-        clienteView.printObjects(trips);
-    }
-
-    private void listTripDetails() throws DatabaseException, IOException {
-        String tripTitle = clienteView.getTripTitle();
-        List<OvernightStay> details = new TripDetailsDAO().execute(tripTitle);
-        clienteView.printObjects(details);
-    }
-
-    private void bookTrip() throws DatabaseException, IOException {
-        String trip = clienteView.getTripTitle();
+    private void bookTrip() throws IOException, SQLException {
+        listAvailableTrips();
+        int tripId = clienteView.getTripId();
         int participants = clienteView.getParticipants();
-        Booking booking = new Booking(trip, credentials.getUsername(), participants);
-        BookDAO bookDAO = new BookDAO();
-        booking = bookDAO.execute(booking);
-        clienteView.showMessage(String.format("Codice prenotazione: %d", booking.getCode()));
+
+        String clientEmail = this.credentials.getUsername();
+
+        int bookingCode = new BookDAO(tripId, clientEmail, participants).execute();
+
+        clienteView.showMessage(String.format("=> Prenotazione effettuata con successo! Il tuo codice prenotazione è: %d", bookingCode));
+        clienteView.showMessage("Conserva questo codice per un'eventuale cancellazione.");
     }
 
-    private void cancelBooking() throws DatabaseException, IOException {
-        int code = clienteView.getBookingCode();
-        CancelBookingDAO cancelBookingDAO = new CancelBookingDAO();
-        cancelBookingDAO.execute(code);
-        clienteView.showMessage("Prenotazione cancellata con successo.");
+    private void cancelBooking() throws IOException, SQLException {
+        int bookingCode = clienteView.getBookingCode();
+        new CancelBookingDAO(bookingCode).execute();
+        clienteView.showMessage("Prenotazione con codice " + bookingCode + " cancellata correttamente.");
     }
 }

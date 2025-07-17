@@ -1,31 +1,29 @@
 package model.dao;
 
-import exceptions.DatabaseException;
-import model.Hotel;
-import model.Trip;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.SQLException;
 
-public class AssignHotelDAO implements BaseDAO<Integer> {
-    @Override
-    public Integer execute(Object... params) throws DatabaseException {
-        String trip = (String) params[0];
-        Date startDate = (Date) params[1];
-        int hotel = (int) params[2];
+public class AssignHotelDAO implements BaseDAO<Void> {
+    private final int overnightStayId;
+    private final int hotelCode;
 
-        try {
-            Connection connection = ConnectionFactory.getConnection();
-            CallableStatement stmt = connection.prepareCall("{call assign_hotel(?,?,?)}");
-            stmt.setString(1, trip);
-            stmt.setDate(2, startDate);
-            stmt.setInt(3, hotel);
-            stmt.executeUpdate();
-            return hotel;
-        } catch (SQLException e) {
-            throw new DatabaseException(String.format("Errore nell'assegnamento dell'hotel: %s", e.getMessage()), e);
+    public AssignHotelDAO(int overnightStayId, int hotelCode) {
+        this.overnightStayId = overnightStayId;
+        this.hotelCode = hotelCode;
+    }
+
+    @Override
+    public Void execute() throws SQLException {
+        final String procedure = "{CALL assign_hotel(?, ?)}";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall(procedure)) {
+
+            cs.setInt(1, this.overnightStayId);
+            cs.setInt(2, this.hotelCode);
+            cs.execute();
         }
+        return null; // Il metodo non restituisce nulla
     }
 }

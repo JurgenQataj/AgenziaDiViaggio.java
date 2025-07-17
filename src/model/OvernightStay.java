@@ -1,62 +1,46 @@
 package model;
 
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
 public class OvernightStay {
-
-    private Trip trip;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private int id;
+    private Date startDate;
+    private Date endDate;
     private Place place;
-    private Hotel hotel;
+    private Hotel hotel; // Questo campo ora può essere NULL
 
-    public OvernightStay(LocalDate startDate, LocalDate endDate) {
+    // Costruttore aggiornato per accettare un hotel nullo
+    public OvernightStay(int id, Date startDate, Date endDate, Place place, Hotel hotel) {
+        this.id = id;
         this.startDate = startDate;
         this.endDate = endDate;
+        this.place = place;
+        this.hotel = hotel;
     }
 
-    public Trip getTrip() {
-        return trip;
+    // Getters
+    public int getId() {
+        return id;
     }
 
-    public Date getStartDate() {
-        return Date.valueOf(startDate);
-    }
+    public Date getStartDate() { return startDate; }
 
-    public Date getEndDate() {
-        return Date.valueOf(endDate);
-    }
+    public Date getEndDate() { return endDate; }
 
-    public Place getPlace() {
-        return place;
-    }
+    public Place getPlace() { return place; }
 
     public Hotel getHotel() {
         return hotel;
     }
 
-    public void setTrip(Trip trip) {
-        this.trip = trip;
-    }
-
-    public void setPlace(Place place) {
-        this.place = place;
-    }
-
-    public void setHotel(Hotel hotel) {
-        this.hotel = hotel;
-    }
-
+    // Metodo toString aggiornato per gestire hotel non assegnato
     @Override
     public String toString() {
-        return String.format("· %s - %s: %s, %s (%s)",
-                startDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                endDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                hotel.getName(),
-                place.getName(),
-                place.getCountry()
-        );
+        String hotelName = (hotel != null) ? hotel.getNome() : "Non ancora assegnato";
+        return String.format("Pernottamento a: %-20s | Dal: %s | Al: %s | Albergo: %s",
+                this.place.getName(),
+                this.startDate.toString(),
+                this.endDate.toString(),
+                hotelName);
     }
 }

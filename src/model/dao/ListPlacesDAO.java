@@ -1,6 +1,5 @@
 package model.dao;
 
-import exceptions.DatabaseException;
 import model.Place;
 
 import java.sql.CallableStatement;
@@ -10,24 +9,31 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListPlacesDAO implements BaseDAO<List<Place>>  {
+public class ListPlacesDAO implements BaseDAO<List<Place>> {
+
+    public ListPlacesDAO() {
+        // Costruttore vuoto
+    }
+
     @Override
-    public List<Place> execute(Object... params) throws DatabaseException {
+    public List<Place> execute() throws SQLException {
+        final String procedure = "{CALL list_places()}";
+        List<Place> places = new ArrayList<>();
 
-        try {
-            Connection connection = ConnectionFactory.getConnection();
-            CallableStatement stmt = connection.prepareCall("{call list_places()}");
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall(procedure)) {
 
-            ResultSet rs = stmt.executeQuery();
-            List<Place> places = new ArrayList<>();
-            Place place;
+            ResultSet rs = cs.executeQuery();
+
             while (rs.next()) {
-                place = new Place(rs.getString("nome"), rs.getString("paese"));
+                // Usiamo il nuovo costruttore senza ID
+                Place place = new Place(
+                        rs.getString("nome"),
+                        rs.getString("paese")
+                );
                 places.add(place);
             }
-            return places;
-        } catch (SQLException e) {
-            throw new DatabaseException(String.format("Errore nell'esecuzione dell'interrogazione: %s", e.getMessage()), e);
         }
+        return places;
     }
 }

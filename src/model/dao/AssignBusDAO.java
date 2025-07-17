@@ -1,31 +1,29 @@
 package model.dao;
 
-import exceptions.DatabaseException;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 
-public class AssignBusDAO implements BaseDAO<List<String>> {
+public class AssignBusDAO implements BaseDAO<Void> {
+    private final int tripId;
+    private final String busPlate;
+
+    public AssignBusDAO(int tripId, String busPlate) {
+        this.tripId = tripId;
+        this.busPlate = busPlate;
+    }
 
     @Override
-    public List<String> execute(Object... params) throws DatabaseException {
-        String tripTitle = (String) params[0];
-        List<String> plates = List.of(Arrays.toString(Arrays.copyOfRange(params, 1, params.length - 1)));
+    public Void execute() throws SQLException {
+        final String procedure = "{CALL assign_bus(?, ?)}";
 
-        try {
-            Connection connection = ConnectionFactory.getConnection();
-            CallableStatement stmt = connection.prepareCall("{call assign_bus(?,?)}");
-            stmt.setString(1, tripTitle);
-            for (String plate : plates) {
-                stmt.setString(2, plate);
-                stmt.executeUpdate();
-            }
-            return plates;
-        } catch (SQLException e) {
-            throw new DatabaseException(String.format("Errore nell'assegnazione dei bus: %s", e.getMessage()), e);
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall(procedure)) {
+
+            cs.setInt(1, this.tripId);
+            cs.setString(2, this.busPlate);
+            cs.execute();
         }
+        return null;
     }
 }

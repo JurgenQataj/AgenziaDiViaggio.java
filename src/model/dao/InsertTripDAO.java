@@ -1,28 +1,38 @@
 package model.dao;
 
-import exceptions.DatabaseException;
-import model.Trip;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.SQLException;
+import java.sql.Types;
 
-public class InsertTripDAO implements BaseDAO<Trip> {
+// Mantengo il nome originale della classe come richiesto
+public class InsertTripDAO implements BaseDAO<Integer> {
+    private final int itinerarioId;
+    private final Date startDate;
+    private final Date endDate;
+
+    public InsertTripDAO(int itinerarioId, Date startDate, Date endDate) {
+        this.itinerarioId = itinerarioId;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
     @Override
-    public Trip execute(Object... params) throws DatabaseException {
-        Trip trip = (Trip) params[0];
+    public Integer execute() throws SQLException {
+        // La procedura da chiamare è "create_trip" dal tuo nuovo dump SQL
+        final String procedure = "{CALL create_trip(?, ?, ?, ?)}";
 
-        try {
-            Connection connection = ConnectionFactory.getConnection();
-            CallableStatement stmt = connection.prepareCall("{call create_trip(?,?,?,?)}");
-            stmt.setString(1, trip.getTitle());
-            stmt.setDate(2, trip.getStartDate());
-            stmt.setDate(3, trip.getReturnDate());
-            stmt.setDouble(4, trip.getPrice());
-            stmt.executeUpdate();
-            return trip;
-        } catch (SQLException e) {
-            throw  new DatabaseException(String.format("Errore nella creazione del viaggio: %s", e.getMessage()), e);
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall(procedure)) {
+
+            cs.setInt(1, this.itinerarioId);
+            cs.setDate(2, this.startDate);
+            cs.setDate(3, this.endDate);
+            cs.registerOutParameter(4, Types.INTEGER); // Parametro di output per il nuovo ID del viaggio
+
+            cs.execute();
+            return cs.getInt(4); // Ritorna l'ID del viaggio appena creato
         }
     }
 }

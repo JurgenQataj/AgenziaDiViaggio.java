@@ -1,47 +1,57 @@
 package model;
 
-import java.sql.Date;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
+import java.util.Date;
+import java.util.List;
 
 public class Trip {
+    private int id;
+    private Date startDate;
+    private Date endDate;
+    private Itinerario itinerario; // Riferimento all'itinerario-template
+    private List<OvernightStay> overnightStays; // Uso il nome originale del tuo campo
 
-    private String title;
-    private LocalDate startDate;
-    private LocalDate returnDate;
-    private Double price;
-
-    public Trip(String title, LocalDate startDate, LocalDate returnDate, Double price) {
-        this.title = title;
+    // Costruttore aggiornato
+    public Trip(int id, Date startDate, Date endDate, Itinerario itinerario) {
+        this.id = id;
         this.startDate = startDate;
-        this.returnDate = returnDate;
-        this.price = price;
+        this.endDate = endDate;
+        this.itinerario = itinerario;
     }
 
-    public String getTitle() {
-        return title;
+    // Getters e Setters
+    public int getId() {
+        return id;
     }
 
     public Date getStartDate() {
-        return Date.valueOf(startDate);
+        return startDate;
     }
 
-    public Date getReturnDate() {
-        return Date.valueOf(returnDate);
+    public Date getEndDate() {
+        return endDate;
     }
 
-    public Double getPrice() {
-        return price;
+    public Itinerario getItinerario() {
+        return itinerario;
     }
 
+    public List<OvernightStay> getOvernightStays() {
+        return overnightStays;
+    }
+
+    public void setOvernightStays(List<OvernightStay> overnightStays) {
+        this.overnightStays = overnightStays;
+    }
+
+    // Metodo toString aggiornato per riflettere la nuova struttura
     @Override
     public String toString() {
-
-        return String.format("· \"%s\" (%s - %s): %.2f €\n",
-                title,
-                startDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                returnDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")),
-                price);
+        // Formattazione simile alla tua classe ListTripsDAO
+        return String.format("%-5d %-40s %-15s %-15s %-10.2f",
+                this.id,
+                this.itinerario.getTitolo(),
+                this.startDate.toString(),
+                this.endDate.toString(),
+                this.itinerario.getCostoPersona());
     }
 }

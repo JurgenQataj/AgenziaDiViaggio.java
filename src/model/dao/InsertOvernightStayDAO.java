@@ -1,29 +1,33 @@
 package model.dao;
 
-import exceptions.DatabaseException;
 import model.OvernightStay;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class InsertOvernightStayDAO implements BaseDAO<OvernightStay> {
+public class InsertOvernightStayDAO implements BaseDAO<Void> {
+    private final int tripId;
+    private final OvernightStay overnightStay;
+
+    public InsertOvernightStayDAO(int tripId, OvernightStay overnightStay) {
+        this.tripId = tripId;
+        this.overnightStay = overnightStay;
+    }
+
     @Override
-    public OvernightStay execute(Object... params) throws DatabaseException {
-        OvernightStay overnightStay = (OvernightStay) params[0];
+    public Void execute() throws SQLException {
+        final String procedure = "{CALL insert_overnight_stay(?, ?, ?, ?)}";
 
-        try {
-            Connection connection = ConnectionFactory.getConnection();
-            CallableStatement stmt = connection.prepareCall("{call insert_overnight_stay(?,?,?,?)}");
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall(procedure)) {
 
-            stmt.setString(1, overnightStay.getTrip().getTitle());
-            stmt.setDate(2, overnightStay.getStartDate());
-            stmt.setDate(3, overnightStay.getEndDate());
-            stmt.setString(4, overnightStay.getPlace().getName());
-            stmt.executeUpdate();
-            return overnightStay;
-        } catch (SQLException e) {
-            throw new DatabaseException(String.format("Errore nell'inserimento del pernottamento: %s", e.getMessage()), e);
+            cs.setInt(1, this.tripId);
+            cs.setDate(2, new java.sql.Date(this.overnightStay.getStartDate().getTime()));
+            cs.setDate(3, new java.sql.Date(this.overnightStay.getEndDate().getTime()));
+            cs.setString(4, this.overnightStay.getPlace().getName());
+
+            cs.execute();
         }
+        return null;
     }
 }

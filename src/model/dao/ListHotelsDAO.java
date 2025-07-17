@@ -1,6 +1,5 @@
 package model.dao;
 
-import exceptions.DatabaseException;
 import model.Hotel;
 import model.Place;
 
@@ -12,21 +11,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListHotelsDAO implements BaseDAO<List<Hotel>> {
+
+    public ListHotelsDAO() {
+        // Costruttore vuoto
+    }
+
     @Override
-    public List<Hotel> execute(Object... params) throws DatabaseException {
+    public List<Hotel> execute() throws SQLException {
+        final String procedure = "{CALL list_hotels()}";
+        List<Hotel> hotels = new ArrayList<>();
 
-        try {
-            Connection connection = ConnectionFactory.getConnection();
-            CallableStatement stmt = connection.prepareCall("{call list_hotels()}");
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall(procedure)) {
 
-            ResultSet rs = stmt.executeQuery();
-            List<Hotel> hotels = new ArrayList<>();
-            Place place;
-            Hotel hotel;
+            ResultSet rs = cs.executeQuery();
+
             while (rs.next()) {
-                place = new Place(rs.getString("localita"), rs.getString("paese"));
-                hotel = new Hotel(
-                        rs.getString("Albergo.nome"),
+                // ***** QUESTA È LA RIGA CORRETTA *****
+                // Usiamo il nuovo costruttore di Place senza l'ID.
+                Place place = new Place(
+                        rs.getString("localita"),
+                        rs.getString("paese")
+                );
+
+                Hotel hotel = new Hotel(
+                        rs.getInt("codice"),
+                        rs.getString("nome"),
                         rs.getString("referente"),
                         rs.getInt("capienza"),
                         rs.getString("via"),
@@ -34,15 +44,13 @@ public class ListHotelsDAO implements BaseDAO<List<Hotel>> {
                         rs.getString("cp"),
                         rs.getString("email"),
                         rs.getString("telefono"),
-                        rs.getString("fax")
+                        rs.getString("fax"),
+                        place,
+                        rs.getFloat("costo_notte_persona")
                 );
-                hotel.setCode(rs.getInt("codice"));
-                hotel.setPlace(place);
                 hotels.add(hotel);
             }
-            return hotels;
-        } catch (SQLException e) {
-            throw new DatabaseException(String.format("Errore nell'esecuzione dell'interrogazione: %s", e.getMessage()), e);
         }
+        return hotels;
     }
 }

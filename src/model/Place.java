@@ -1,32 +1,19 @@
 package model;
 
 public class Place {
-
-    private int id;
+    // Rimuoviamo il campo 'id'
     private String name;
     private String country;
 
-    // ---> AGGIUNGI QUESTO COSTRUTTORE <---
-    public Place() {
-        // Costruttore vuoto
-    }
-
-    // Questo è il costruttore che hai già
+    /**
+     * Il nuovo costruttore non ha più bisogno dell'ID.
+     */
     public Place(String name, String country) {
         this.name = name;
         this.country = country;
     }
 
-    // Qui ci sono i tuoi metodi getter e setter...
-    // Assicurati che ci sia anche setId(), come detto prima.
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
+    // --- Getters e Setters (invariati) ---
 
     public String getName() {
         return name;
@@ -44,12 +31,13 @@ public class Place {
         this.country = country;
     }
 
+    /**
+     * Il metodo toString() ora stampa solo le informazioni reali,
+     * senza un ID fittizio.
+     */
     @Override
     public String toString() {
-        return "Place{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", country='" + country + '\'' +
-                '}';
+        // Formato di output pulito, senza ID.
+        return name + " (" + country + ")";
     }
 }
