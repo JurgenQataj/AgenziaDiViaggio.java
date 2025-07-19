@@ -1,27 +1,30 @@
 package controller;
 
 import View.ClienteView;
+import model.BookingDetails;
 import model.Role;
+import model.Trip;
+import model.dao.BookDAO;
+import model.dao.CancelBookingDAO;
 import model.dao.ConnectionFactory;
-
+import model.dao.ListClientBookingsDAO;
+import model.dao.ListTripsDAO;
 import java.io.IOException;
+import java.sql.Date;
 import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.List;
 
 public class ClienteController {
 
     private final ClienteView view;
     private final AppController appController;
-    private final String clientEmail; // Memorizza l'email del cliente loggato
+    private final String clientEmail;
 
-    /**
-     * Costruttore corretto. Richiede solo l'AppController e l'email del cliente.
-     * @param appController Il controller principale dell'applicazione.
-     * @param clientEmail L'email dell'utente che ha effettuato il login.
-     */
     public ClienteController(AppController appController, String clientEmail) {
         this.appController = appController;
         this.clientEmail = clientEmail;
-        this.view = new ClienteView(); // Ogni controller ha la sua view
+        this.view = new ClienteView();
     }
 
     public void start() {
@@ -29,42 +32,70 @@ public class ClienteController {
         boolean running = true;
         while (running) {
             try {
-                int choice = view.showMenu(); // La view mostrerà il menu del cliente
+                int choice = view.showMenu();
                 switch (choice) {
-                    // Esempio di opzioni per il cliente
                     case 1:
-                        // Logica per visualizzare i viaggi disponibili
-                        // Esempio: new ListTripsDAO(...).execute();
+                        listAvailableTrips();
                         break;
                     case 2:
-                        // Logica per prenotare un viaggio
-                        // Esempio: new BookDAO(...).execute();
+                        bookTrip();
                         break;
                     case 3:
-                        // Logica per vedere le proprie prenotazioni
-                        view.showMessage("Le tue prenotazioni (per " + this.clientEmail + "):");
-                        // Qui chiamerai un DAO per ottenere le prenotazioni per questa email
-                        // Esempio: new ListMyBookingsDAO(this.clientEmail).execute();
+                        cancelBooking();
                         break;
                     case 4:
-                        // Logica per cancellare una prenotazione
-                        // Esempio: new CancelBookingDAO(...).execute();
-                        break;
-                    case 5:
                         appController.logout();
                         running = false;
                         break;
                     default:
                         view.showMessage("Opzione non valida.");
                 }
-                // ################### ECCO LA CORREZIONE ###################
-                // Catturando la classe base 'Exception', gestiamo sia IOException
-                // sia SQLException (quando verrà aggiunta la logica nel 'case')
-                // e qualsiasi altro errore imprevisto, senza errori di compilazione.
             } catch (Exception e) {
-                // #########################################################
                 view.printError(e);
             }
         }
+    }
+
+    private void listAvailableTrips() throws SQLException {
+        view.showMessage("\n--- Viaggi Disponibili ---");
+        List<Trip> trips = new ListTripsDAO(Date.valueOf(LocalDate.now())).execute();
+        view.printObjects(trips);
+    }
+
+    private void bookTrip() throws SQLException, IOException {
+        view.showMessage("\n--- Prenota un Viaggio ---");
+        listAvailableTrips();
+
+        int tripId = view.getTripIdToBook();
+        int participants = view.getNumberOfParticipants();
+
+        int bookingCode = new BookDAO(tripId, this.clientEmail, participants).execute();
+        view.showMessage("Prenotazione effettuata con successo! Il tuo codice è: " + bookingCode);
+    }
+
+    private void cancelBooking() throws SQLException, IOException {
+        view.showMessage("\n--- Cancella una Prenotazione ---");
+
+        // 1. Usa il nuovo DAO per recuperare e mostrare le prenotazioni del cliente loggato
+        List<BookingDetails> myBookings = new ListClientBookingsDAO(this.clientEmail).execute();
+
+        if (myBookings.isEmpty()) {
+            view.showMessage("Non hai nessuna prenotazione attiva da poter cancellare.");
+            return;
+        }
+
+        view.showMessage("Le tue prenotazioni attive:");
+        view.printObjects(myBookings);
+
+        // 2. Chiedi quale prenotazione cancellare
+        int bookingCodeToCancel = view.getBookingCodeToCancel();
+        if (bookingCodeToCancel <= 0) {
+            view.showMessage("Cancellazione annullata.");
+            return;
+        }
+
+        // 3. Esegui la cancellazione usando il DAO esistente
+        new CancelBookingDAO(bookingCodeToCancel).execute();
+        view.showMessage("Prenotazione con codice " + bookingCodeToCancel + " cancellata con successo.");
     }
 }

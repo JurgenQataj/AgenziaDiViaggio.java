@@ -1,53 +1,33 @@
 package model.dao;
 
+import model.Role;
+import model.User;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.sql.Types;
 
-// La classe ora segue il pattern del tuo progetto
-public class RegistrationDAO implements BaseDAO {
-    private final String email;
-    private final String nome;
-    private final String cognome;
-    private final String password;
-    private final String telefono;
+public class RegistrationDAO {
+    private final User user;
 
-    // I dati vengono passati nel costruttore
-    public RegistrationDAO(String email, String nome, String cognome, String password, String telefono) {
-        this.email = email;
-        this.nome = nome;
-        this.cognome = cognome;
-        this.password = password;
-        this.telefono = telefono;
+    // Il costruttore ora accetta un singolo oggetto User
+    public RegistrationDAO(User user) {
+        this.user = user;
     }
 
-    /**
-     * Esegue la stored procedure 'registration' sul database.
-     * Questo metodo ora implementa correttamente il contratto dell'interfaccia BaseDAO.
-     */
-    @Override
-    public Void execute() throws SQLException {
-        Connection conn = null;
-        CallableStatement cs = null;
+    public void execute() throws SQLException {
+        String sql = "{CALL registration(?, ?, ?, ?, ?, ?)}";
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            cs = conn.prepareCall("{CALL registration(?, ?, ?, ?, ?, ?)}");
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            cs.setString(1, this.email);
-            cs.setString(2, this.nome);
-            cs.setString(3, this.cognome);
-            cs.setString(4, this.password);
-            cs.setString(5, this.telefono);
-            cs.setNull(6, Types.VARCHAR); // Ruolo gestito dalla procedura
+            cs.setString(1, user.getEmail());
+            cs.setString(2, user.getNome());
+            cs.setString(3, user.getCognome());
+            cs.setString(4, user.getPassword());
+            cs.setString(5, user.getTelefono());
+            cs.setString(6, Role.CLIENTE.name()); // I nuovi utenti sono sempre CLIENTE
 
-            cs.execute();
-
-        } finally {
-            if (cs != null) cs.close();
-            if (conn != null) conn.close();
+            cs.executeUpdate();
         }
-        return null; // Il metodo deve restituire qualcosa (anche se Void)
     }
 }

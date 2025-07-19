@@ -49,7 +49,8 @@ public class AppController {
                     }
                     break;
                 case 2:
-                    // new RegistrationController(scanner).register();
+                    // Nuova versione corretta
+                    new RegistrationController().start();
                     break;
                 case 3:
                     System.out.println("Arrivederci!");

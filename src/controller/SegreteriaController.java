@@ -288,8 +288,31 @@ public class SegreteriaController {
     }
 
     private void cancelBooking() throws SQLException, IOException {
-        int code = view.getBookingCode();
-        new CancelBookingDAO(code).execute();
-        view.showMessage("Prenotazione con codice " + code + " cancellata.");
+        view.showMessage("\n--- Gestione/Cancellazione Prenotazioni Cliente ---");
+
+        // 1. La segreteria inserisce l'email del cliente da cercare
+        String clientEmail = view.getClientEmail();
+
+        // 2. Usa lo STESSO DAO del cliente per recuperare le prenotazioni
+        List<BookingDetails> clientBookings = new ListClientBookingsDAO(clientEmail).execute();
+
+        if (clientBookings.isEmpty()) {
+            view.showMessage("Nessuna prenotazione attiva trovata per il cliente: " + clientEmail);
+            return;
+        }
+
+        view.showMessage("Prenotazioni attive per " + clientEmail + ":");
+        view.printObjects(clientBookings);
+
+        // 3. La segreteria sceglie quale prenotazione cancellare
+        int bookingCodeToCancel = view.getBookingCodeToCancel();
+        if (bookingCodeToCancel <= 0) {
+            view.showMessage("Operazione annullata.");
+            return;
+        }
+
+        // 4. Usa il DAO esistente per la cancellazione
+        new CancelBookingDAO(bookingCodeToCancel).execute();
+        view.showMessage("Prenotazione con codice " + bookingCodeToCancel + " cancellata con successo.");
     }
 }

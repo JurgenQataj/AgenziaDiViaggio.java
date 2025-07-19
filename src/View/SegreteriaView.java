@@ -43,12 +43,6 @@ public class SegreteriaView {
         }
     }
 
-    /**
-     * Mostra un messaggio e legge una linea di input dall'utente.
-     * @param message Il messaggio da mostrare.
-     * @return La stringa inserita.
-     * @throws IOException
-     */
     public String getInput(String message) throws IOException {
         System.out.print(message);
         return reader.readLine();
@@ -77,10 +71,21 @@ public class SegreteriaView {
         return Integer.parseInt(reader.readLine());
     }
 
-    public int getBookingCode() throws IOException {
-        System.out.print("Inserisci il codice della prenotazione: ");
-        return Integer.parseInt(reader.readLine());
+    // ################### METODO MANCANTE AGGIUNTO ###################
+    /**
+     * Chiede all'utente il codice di una prenotazione da cancellare.
+     * @return il codice della prenotazione, o un valore non valido per annullare.
+     * @throws IOException
+     */
+    public int getBookingCodeToCancel() throws IOException {
+        System.out.print("Inserisci il codice della prenotazione da cancellare (o 0 per annullare): ");
+        try {
+            return Integer.parseInt(reader.readLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
+    // ###############################################################
 
     public String getClientEmail() throws IOException {
         System.out.print("Inserisci l'email del cliente: ");
