@@ -1,250 +1,184 @@
-package view;
+package View;
 
-import exceptions.DatabaseException;
-import model.Hotel;
-import model.Itinerario;
-import model.OvernightStay;
-import model.Place;
-import model.Trip;
-
+import model.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
-public class SegreteriaView extends View {
-
+public class SegreteriaView {
     private final BufferedReader reader;
 
     public SegreteriaView() {
         this.reader = new BufferedReader(new InputStreamReader(System.in));
     }
 
-    // --- METODI HELPER PRIVATI ---
-
-    private String readLineFromUser() throws IOException {
-        String line;
-        while ((line = reader.readLine()) != null && line.trim().isEmpty()) {}
-        return line;
-    }
-
-    private LocalDate parseDateFromUser() throws IOException {
-        while (true) {
-            try {
-                SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-                format.setLenient(false);
-                java.util.Date parsedDate = format.parse(readLineFromUser());
-                return parsedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-            } catch (ParseException e) {
-                System.err.print("Formato data non valido (gg/mm/aaaa): ");
-            }
-        }
-    }
-
-    private int parseIntFromUser() throws IOException {
-        while (true) {
-            try {
-                return Integer.parseInt(readLineFromUser());
-            } catch (NumberFormatException e) {
-                System.err.print("Input non valido. Inserire un numero intero: ");
-            }
-        }
-    }
-
-    private double parseDoubleFromUser() throws IOException {
-        while (true) {
-            try {
-                return Double.parseDouble(readLineFromUser());
-            } catch (NumberFormatException e) {
-                System.err.print("Input non valido. Inserire un numero: ");
-            }
-        }
-    }
-
-    // --- METODI PUBBLICI PER L'INTERAZIONE ---
-
     public int showMenu() throws IOException {
         System.out.println("\n--- MENU SEGRETERIA ---");
-        System.out.println("1)  Crea un nuovo viaggio da un itinerario");
-        System.out.println("2)  Crea un nuovo itinerario-modello"); // NUOVA OPZIONE
-        System.out.println("3)  Inserisci una nuova località");
-        System.out.println("4)  Inserisci un nuovo albergo");
-        System.out.println("5)  Elenca tutti i viaggi futuri");
-        System.out.println("6)  Elenca i dettagli di un viaggio");
-        System.out.println("7)  Elenca tutte le località");
-        System.out.println("8)  Elenca tutti gli alberghi");
-        System.out.println("9)  Genera report guadagni/perdite di un viaggio");
+        System.out.println("1) Crea un nuovo viaggio da un itinerario");
+        System.out.println("2) Crea un nuovo itinerario-modello");
+        System.out.println("3) Inserisci una nuova località");
+        System.out.println("4) Inserisci un nuovo albergo");
+        System.out.println("5) Elenca tutti i viaggi futuri");
+        System.out.println("6) Elenca i dettagli di un viaggio");
+        System.out.println("7) Elenca tutte le località");
+        System.out.println("8) Elenca tutti gli alberghi");
+        System.out.println("9) Genera report guadagni/perdite di un viaggio");
         System.out.println("10) Assegna autobus ad un viaggio");
         System.out.println("11) Assegna albergo a un pernottamento");
         System.out.println("12) Esegui una prenotazione per un cliente");
         System.out.println("13) Cancella una prenotazione");
-        System.out.println("14) Esci"); // AGGIORNATO
+        System.out.println("14) Esci");
         System.out.print("Scegli un'opzione: ");
-        return parseIntFromUser();
+        try {
+            return Integer.parseInt(reader.readLine());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
     }
 
-    public void printError(DatabaseException e) {
-        System.err.println("ERRORE DATABASE: " + e.getMessage());
+    public void showMessage(String message) {
+        System.out.println(message);
+    }
+
+    public void printError(Exception e) {
+        System.out.println("ERRORE: " + e.getMessage());
+    }
+
+    public <T> void printObjects(List<T> objects) {
+        if (objects == null || objects.isEmpty()) {
+            System.out.println("Nessun risultato da mostrare.");
+            return;
+        }
+        for (T obj : objects) {
+            System.out.println(obj.toString());
+        }
+    }
+
+    public int getTripId() throws IOException {
+        System.out.print("Inserisci l'ID del viaggio: ");
+        return Integer.parseInt(reader.readLine());
+    }
+
+    public int getBookingCode() throws IOException {
+        System.out.print("Inserisci il codice della prenotazione: ");
+        return Integer.parseInt(reader.readLine());
+    }
+
+    public String getClientEmail() throws IOException {
+        System.out.print("Inserisci l'email del cliente: ");
+        return reader.readLine();
+    }
+
+    public int getParticipants() throws IOException {
+        System.out.print("Inserisci il numero di partecipanti: ");
+        return Integer.parseInt(reader.readLine());
     }
 
     public int askForItinerario(List<Itinerario> itinerari) throws IOException {
-        System.out.println("\n--- Selezione Itinerario ---");
-        if (itinerari == null || itinerari.isEmpty()) {
-            System.out.println("Nessun itinerario-template disponibile. Creane uno prima con l'opzione 2.");
-            return -1;
-        }
-        itinerari.forEach(System.out::println);
-        System.out.print("\nSeleziona l'ID dell'itinerario: ");
-        return parseIntFromUser();
+        System.out.println("Itinerari-modello disponibili:");
+        printObjects(itinerari);
+        System.out.print("Scegli l'ID dell'itinerario da usare (o 0 per annullare): ");
+        return Integer.parseInt(reader.readLine());
     }
 
-    public Trip getTripDates() throws IOException {
-        System.out.print("Data di partenza (gg/mm/aaaa): ");
-        LocalDate startDate = parseDateFromUser();
-        System.out.print("Data del rientro (gg/mm/aaaa): ");
-        LocalDate returnDate = parseDateFromUser();
-
-        if (returnDate.isBefore(startDate)) {
-            System.err.println("Errore: La data di rientro non può precedere la partenza.");
-            return getTripDates();
-        }
-        return new Trip(0, Date.valueOf(startDate), Date.valueOf(returnDate), null);
+    public Date[] getTripDates() throws IOException, ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.print("Inserisci la data di partenza (YYYY-MM-DD): ");
+        Date startDate = sdf.parse(reader.readLine());
+        System.out.print("Inserisci la data di rientro (YYYY-MM-DD): ");
+        Date endDate = sdf.parse(reader.readLine());
+        return new Date[]{startDate, endDate};
     }
 
     public int getOvernightsNumber() throws IOException {
-        System.out.print("Quante tappe (pernottamenti) vuoi aggiungere a questo viaggio? ");
-        return parseIntFromUser();
+        System.out.print("Quante tappe (pernottamenti) vuoi aggiungere? ");
+        return Integer.parseInt(reader.readLine());
     }
 
-    public OvernightStay getOvernightData(List<Place> availablePlaces) throws IOException {
-        System.out.println("\n--- Aggiunta Tappa (Pernottamento) ---");
-        if (availablePlaces == null || availablePlaces.isEmpty()) {
-            System.out.println("Nessuna località disponibile.");
-            return null;
-        }
+    public OvernightStay getOvernightData(List<Place> availablePlaces) throws IOException, ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.println("\n-- Aggiunta Nuova Tappa --");
         System.out.println("Località disponibili:");
-        availablePlaces.forEach(p -> System.out.println("- " + p.getName()));
+        availablePlaces.forEach(p -> System.out.println("- " + p.getNome()));
+        System.out.print("Inserisci il nome della località per questa tappa: ");
+        String nomeLocalita = reader.readLine();
+        System.out.print("Data inizio pernottamento (YYYY-MM-DD): ");
+        Date dataInizioP = sdf.parse(reader.readLine());
+        System.out.print("Data fine pernottamento (YYYY-MM-DD): ");
+        Date dataFineP = sdf.parse(reader.readLine());
+        return new OvernightStay(dataInizioP, dataFineP, nomeLocalita);
+    }
 
-        System.out.print("Scegli la località (digita il nome esatto): ");
-        String placeName = readLineFromUser();
-
-        Place selectedPlace = availablePlaces.stream()
-                .filter(p -> p.getName().equalsIgnoreCase(placeName))
-                .findFirst().orElse(null);
-
-        if (selectedPlace == null) {
-            System.err.println("Nome località non trovato o non valido. Riprova.");
-            return getOvernightData(availablePlaces);
-        }
-        System.out.print("Data di inizio pernottamento (gg/mm/aaaa): ");
-        LocalDate startDate = parseDateFromUser();
-        System.out.print("Data di fine pernottamento (gg/mm/aaaa): ");
-        LocalDate endDate = parseDateFromUser();
-        if (endDate.isBefore(startDate)) {
-            System.err.println("Errore: La data di fine non può precedere l'inizio.");
-            return getOvernightData(availablePlaces);
-        }
-        return new OvernightStay(0, Date.valueOf(startDate), Date.valueOf(endDate), selectedPlace, null);
+    public Itinerario getItinerarioValues() throws IOException {
+        System.out.print("Inserisci il titolo del nuovo itinerario: ");
+        String titolo = reader.readLine();
+        System.out.print("Inserisci il costo per persona: ");
+        double costo = Double.parseDouble(reader.readLine());
+        return new Itinerario(0, titolo, costo);
     }
 
     public Place getPlaceValues() throws IOException {
         System.out.print("Nome della località: ");
-        String name = readLineFromUser();
-        System.out.print("Paese della località: ");
-        String country = readLineFromUser();
-        return new Place(name, country);
+        String nome = reader.readLine();
+        System.out.print("Paese di appartenenza: ");
+        String paese = reader.readLine();
+        return new Place(nome, paese);
     }
 
-    public Hotel getHotelValues(List<Place> availablePlaces) throws IOException {
-        System.out.println("\n--- Inserimento Nuovo Albergo ---");
-        System.out.print("Nome albergo: "); String name = readLineFromUser();
-        System.out.print("Nome referente: "); String referee = readLineFromUser();
-        System.out.print("Capienza: "); int capacity = parseIntFromUser();
-        System.out.print("Via: "); String street = readLineFromUser();
-        System.out.print("Civico: "); String civic = readLineFromUser();
-        System.out.print("CAP: "); String cp = readLineFromUser();
-        System.out.print("Email: "); String email = readLineFromUser();
-        System.out.print("Telefono: "); String telephone = readLineFromUser();
-        System.out.print("Fax (opzionale): "); String fax = readLineFromUser();
-        System.out.print("Costo per notte a persona (€): "); double cost = parseDoubleFromUser();
-        if (availablePlaces == null || availablePlaces.isEmpty()) {
-            System.out.println("Nessuna località disponibile a cui associare l'albergo.");
-            return null;
+    public Hotel getHotelValues(List<Place> places) throws IOException {
+        System.out.println("\nLocalità esistenti:");
+        places.forEach(p -> System.out.println("- " + p.getNome()));
+
+        Place selectedPlace = null;
+        while (selectedPlace == null) {
+            System.out.print("In quale località si trova l'albergo? ");
+            String nomeLocalita = reader.readLine();
+
+            Optional<Place> foundPlace = places.stream()
+                    .filter(p -> p.getNome().equalsIgnoreCase(nomeLocalita))
+                    .findFirst();
+            if (foundPlace.isPresent()) {
+                selectedPlace = foundPlace.get();
+            } else {
+                System.out.println("ERRORE: Località non trovata. Riprova.");
+            }
         }
-        System.out.println("Località disponibili:");
-        availablePlaces.forEach(p -> System.out.println("- " + p.getName()));
 
-        System.out.print("Scegli la località per il nuovo albergo (digita il nome esatto): ");
-        String placeName = readLineFromUser();
+        System.out.print("Nome albergo: "); String nome = reader.readLine();
+        System.out.print("Referente: "); String referente = reader.readLine();
+        System.out.print("Capienza: "); int capienza = Integer.parseInt(reader.readLine());
+        System.out.print("Via: "); String via = reader.readLine();
+        System.out.print("Civico: "); String civico = reader.readLine();
+        System.out.print("CAP: "); String cp = reader.readLine();
+        System.out.print("Email: "); String email = reader.readLine();
+        System.out.print("Telefono: "); String telefono = reader.readLine();
+        System.out.print("Fax (opzionale): "); String fax = reader.readLine();
+        System.out.print("Costo per notte a persona: "); double costoNotte = Double.parseDouble(reader.readLine());
 
-        Place selectedPlace = availablePlaces.stream()
-                .filter(p -> p.getName().equalsIgnoreCase(placeName))
-                .findFirst().orElse(null);
-
-        if (selectedPlace == null) {
-            System.err.println("Nome località non trovato o non valido. Riprova.");
-            return null;
-        }
-        return new Hotel(0, name, referee, capacity, street, civic, cp, email, telephone, fax, selectedPlace, (float)cost);
-    }
-
-    public int getTripId() throws IOException {
-        System.out.print("Inserire l'ID del viaggio: ");
-        return parseIntFromUser();
-    }
-
-    public int getOvernightStayId() throws IOException {
-        System.out.print("Inserire l'ID del pernottamento: ");
-        return parseIntFromUser();
-    }
-
-    public int getHotelCode() throws IOException {
-        System.out.print("Inserire il codice dell'albergo: ");
-        return parseIntFromUser();
+        return new Hotel(0, nome, referente, capienza, via, civico, cp, email, telefono, fax, selectedPlace, costoNotte);
     }
 
     public List<String> getBusPlates() throws IOException {
-        List<String> plates = new ArrayList<>();
-        String input;
-        System.out.println("Inserire le targhe degli autobus (inserire 'q' per terminare):");
-        while (!(input = readLineFromUser()).equalsIgnoreCase("q")) {
-            if (!input.trim().isEmpty()) plates.add(input);
-        }
-        return plates;
+        System.out.print("Inserisci le targhe degli autobus da assegnare (separate da una virgola): ");
+        String[] plates = reader.readLine().split(",");
+        List<String> plateList = new ArrayList<>();
+        for (String p : plates) { plateList.add(p.trim()); }
+        return plateList;
     }
 
-    public int getParticipants() throws IOException {
-        System.out.print("Inserire il numero di persone per la prenotazione: ");
-        return parseIntFromUser();
+    public int getOvernightStayId() throws IOException {
+        System.out.print("Inserisci l'ID del pernottamento a cui assegnare l'albergo: ");
+        return Integer.parseInt(reader.readLine());
     }
 
-    public int getBookingCode() throws IOException {
-        System.out.print("Inserire il codice della prenotazione: ");
-        return parseIntFromUser();
-    }
-
-    public String getClientEmail() throws IOException {
-        System.out.print("Inserire l'email del cliente: ");
-        return readLineFromUser();
-    }
-
-    /**
-     * NUOVO METODO: Chiede i dati per un nuovo itinerario-modello.
-     * @return Un oggetto Itinerario con i dati inseriti.
-     * @throws IOException
-     */
-    public Itinerario getItinerarioValues() throws IOException {
-        System.out.println("\n--- Creazione Nuovo Itinerario-Modello ---");
-        System.out.print("Inserisci il titolo dell'itinerario (es. Tour della Toscana): ");
-        String titolo = readLineFromUser();
-        System.out.print("Inserisci il costo base per persona (€): ");
-        double costo = parseDoubleFromUser();
-        return new Itinerario(0, titolo, (float) costo);
+    public int getHotelCode() throws IOException {
+        System.out.print("Inserisci il codice dell'albergo da assegnare: ");
+        return Integer.parseInt(reader.readLine());
     }
 }

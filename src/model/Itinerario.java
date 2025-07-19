@@ -1,11 +1,11 @@
 package model;
 
 public class Itinerario {
-    private int id;
-    private String titolo;
-    private float costoPersona;
+    private final int id;
+    private final String titolo;
+    private final double costoPersona; // Il tipo è double per la precisione
 
-    public Itinerario(int id, String titolo, float costoPersona) {
+    public Itinerario(int id, String titolo, double costoPersona) {
         this.id = id;
         this.titolo = titolo;
         this.costoPersona = costoPersona;
@@ -20,14 +20,16 @@ public class Itinerario {
         return titolo;
     }
 
-    public float getCostoPersona() {
+    /**
+     * Restituisce il costo per persona.
+     * @return un valore double.
+     */
+    public double getCostoPersona() {
         return costoPersona;
     }
 
     @Override
     public String toString() {
-        return "Itinerario #" + id +
-                " - Titolo: '" + titolo + '\'' +
-                ", Costo per Persona: " + String.format("%.2f", costoPersona) + "€";
+        return String.format("Itinerario #%d: %s, Costo: %.2f €", id, titolo, costoPersona);
     }
 }

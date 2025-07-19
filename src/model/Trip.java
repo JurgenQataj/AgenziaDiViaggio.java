@@ -1,16 +1,13 @@
 package model;
 
 import java.util.Date;
-import java.util.List;
 
 public class Trip {
-    private int id;
-    private Date startDate;
-    private Date endDate;
-    private Itinerario itinerario; // Riferimento all'itinerario-template
-    private List<OvernightStay> overnightStays; // Uso il nome originale del tuo campo
+    private final int id;
+    private final Date startDate;
+    private final Date endDate;
+    private final Itinerario itinerario; // Un viaggio è sempre basato su un itinerario
 
-    // Costruttore aggiornato
     public Trip(int id, Date startDate, Date endDate, Itinerario itinerario) {
         this.id = id;
         this.startDate = startDate;
@@ -18,7 +15,7 @@ public class Trip {
         this.itinerario = itinerario;
     }
 
-    // Getters e Setters
+    // Getters per accedere ai dati del viaggio
     public int getId() {
         return id;
     }
@@ -35,23 +32,14 @@ public class Trip {
         return itinerario;
     }
 
-    public List<OvernightStay> getOvernightStays() {
-        return overnightStays;
-    }
-
-    public void setOvernightStays(List<OvernightStay> overnightStays) {
-        this.overnightStays = overnightStays;
-    }
-
-    // Metodo toString aggiornato per riflettere la nuova struttura
     @Override
     public String toString() {
-        // Formattazione simile alla tua classe ListTripsDAO
-        return String.format("%-5d %-40s %-15s %-15s %-10.2f",
-                this.id,
-                this.itinerario.getTitolo(),
-                this.startDate.toString(),
-                this.endDate.toString(),
-                this.itinerario.getCostoPersona());
+        // Formatta l'output per una facile lettura nella console
+        return String.format("Viaggio #%d | %s | Partenza: %s | Rientro: %s | Costo: %.2f €",
+                id,
+                itinerario.getTitolo(),
+                new java.sql.Date(startDate.getTime()), // Formattazione più pulita
+                new java.sql.Date(endDate.getTime()),
+                itinerario.getCostoPersona());
     }
 }

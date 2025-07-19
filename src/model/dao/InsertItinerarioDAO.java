@@ -1,29 +1,39 @@
 package model.dao;
 
 import model.Itinerario;
+import java.sql.CallableStatement;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public class InsertItinerarioDAO implements BaseDAO<Void> {
-
+public class InsertItinerarioDAO implements BaseDAO {
     private final Itinerario itinerario;
 
     public InsertItinerarioDAO(Itinerario itinerario) {
         this.itinerario = itinerario;
     }
 
+    /**
+     * Esegue la stored procedure 'create_itinerary' per salvare un nuovo
+     * itinerario-modello nel database.
+     */
     @Override
     public Void execute() throws SQLException {
-        // Usiamo una semplice query SQL perché non c'è una procedura specifica per questo
-        final String query = "INSERT INTO itinerario (titolo, costo_persona) VALUES (?, ?);";
+        Connection conn = null;
+        CallableStatement cs = null;
 
-        try (Connection conn = ConnectionFactory.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+        try {
+            conn = ConnectionFactory.getConnection();
+            // Chiama la procedura con il nome corretto che abbiamo appena creato
+            cs = conn.prepareCall("{CALL create_itinerary(?, ?)}");
 
-            pstmt.setString(1, this.itinerario.getTitolo());
-            pstmt.setFloat(2, this.itinerario.getCostoPersona());
-            pstmt.executeUpdate();
+            cs.setString(1, itinerario.getTitolo());
+            cs.setDouble(2, itinerario.getCostoPersona());
+
+            cs.execute();
+
+        } finally {
+            if (cs != null) cs.close();
+            if (conn != null) conn.close();
         }
         return null;
     }

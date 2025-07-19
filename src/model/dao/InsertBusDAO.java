@@ -1,15 +1,15 @@
 package model.dao;
 
-import model.Place;
+import model.Autobus;
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class InsertPlaceDAO implements BaseDAO {
-    private final Place place;
+public class InsertBusDAO implements BaseDAO {
+    private final Autobus autobus;
 
-    public InsertPlaceDAO(Place place) {
-        this.place = place;
+    public InsertBusDAO(Autobus autobus) {
+        this.autobus = autobus;
     }
 
     @Override
@@ -19,11 +19,11 @@ public class InsertPlaceDAO implements BaseDAO {
 
         try {
             conn = ConnectionFactory.getConnection();
-            cs = conn.prepareCall("{CALL new_location(?, ?)}");
+            cs = conn.prepareCall("{CALL create_bus(?, ?, ?)}");
 
-            // Ora questo codice funzionerà perché Place ha i metodi getter
-            cs.setString(1, place.getNome());
-            cs.setString(2, place.getPaese());
+            cs.setString(1, autobus.getTarga());
+            cs.setInt(2, autobus.getCapienza());
+            cs.setDouble(3, autobus.getCostoGiornaliero());
 
             cs.execute();
 

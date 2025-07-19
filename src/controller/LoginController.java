@@ -1,46 +1,45 @@
 package controller;
 
-import exceptions.DatabaseException;
 import model.LoginCredentials;
 import model.Role;
 import model.dao.LoginDAO;
-import view.LoginView;
 
 import java.sql.SQLException;
+import java.util.Scanner;
 
-public class LoginController implements Controller {
+public class LoginController {
+    private final Scanner scanner;
+    private final AppController appController;
 
-    private final LoginView loginView;
-
-    public LoginController() {
-        loginView = new LoginView();
+    public LoginController(Scanner scanner, AppController appController) {
+        this.scanner = scanner;
+        this.appController = appController;
     }
 
-    @Override
-    public void start() {
-        // Questo metodo è intenzionalmente vuoto perché la logica
-        // è ora gestita da AppController che chiama authenticateUser.
-    }
+    /**
+     * Gestisce il flusso di interazione per il login.
+     */
+    public void handleLogin() {
+        System.out.println("\n--- LOGIN ---");
+        System.out.print("Inserisci email: ");
+        String email = scanner.nextLine(); // Abbiamo l'email qui
+        System.out.print("Inserisci password: ");
+        String password = scanner.nextLine();
 
-    public LoginCredentials authenticateUser() {
-        LoginCredentials credentials = loginView.authenticate();
-        if (credentials == null) return null; // L'utente potrebbe aver interrotto
+        LoginCredentials credentials = new LoginCredentials(email, password);
 
         try {
-            LoginDAO loginDAO = new LoginDAO(credentials);
-            Role role = loginDAO.execute();
+            LoginDAO dao = new LoginDAO(credentials);
+            Role role = dao.execute();
 
             if (role != null) {
-                credentials.setRole(role);
-                loginView.showMessage("Login effettuato con successo come: " + role);
-                return credentials;
+                // --- CORREZIONE: Usiamo la variabile 'email' che già abbiamo ---
+                appController.onLoginSuccess(role, email);
             } else {
-                loginView.showMessage("Credenziali non valide. Riprova.");
-                return null;
+                System.out.println("ERRORE: Email o password non validi.");
             }
         } catch (SQLException e) {
-            loginView.printError(new DatabaseException(e.getMessage()));
-            return null;
+            System.out.println("ERRORE DATABASE: " + e.getMessage());
         }
     }
 }

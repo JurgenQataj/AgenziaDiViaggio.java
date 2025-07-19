@@ -1,35 +1,27 @@
 package model;
 
 public class LoginCredentials {
-
-    private final String username;
+    private final String email;
     private final String password;
-    private Role role = null;
 
-    public LoginCredentials(String username, String password) {
-        this.username = username;
+    public LoginCredentials(String email, String password) {
+        this.email = email;
         this.password = password;
     }
 
-    public LoginCredentials(String username, String password, Role role) {
-        this.username = username;
-        this.password = password;
-        this.role = role;
+    /**
+     * Restituisce l'email per queste credenziali.
+     * @return una Stringa contenente l'email.
+     */
+    public String getEmail() {
+        return email;
     }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
+    /**
+     * Restituisce la password per queste credenziali.
+     * @return una Stringa contenente la password.
+     */
     public String getPassword() {
         return password;
-    }
-
-    public Role getRole() {
-        return role;
     }
 }

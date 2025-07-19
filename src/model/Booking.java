@@ -1,35 +1,48 @@
 package model;
 
+// Questa classe rappresenta una singola prenotazione
 public class Booking {
+    private final int codice;
+    private final int numeroPersone;
+    private final String clienteEmail;
+    private final int viaggioId;
 
-    private int code;
-    private String tripTitle;
-    private String user;
-    private int participants;
-
-    public Booking(String tripTitle, String user, int participants) {
-        this.tripTitle = tripTitle;
-        this.user = user;
-        this.participants = participants;
+    /**
+     * COSTRUTTORE CORRETTO:
+     * Accetta i parametri che corrispondono alle colonne della tabella 'prenotazione'.
+     * @param codice L'ID univoco della prenotazione.
+     * @param numeroPersone Il numero di partecipanti per questa prenotazione.
+     * @param clienteEmail L'email del cliente che ha prenotato.
+     * @param viaggioId L'ID del viaggio a cui si riferisce la prenotazione.
+     */
+    public Booking(int codice, int numeroPersone, String clienteEmail, int viaggioId) {
+        this.codice = codice;
+        this.numeroPersone = numeroPersone;
+        this.clienteEmail = clienteEmail;
+        this.viaggioId = viaggioId;
     }
 
-    public String getTripTitle() {
-        return tripTitle;
+    // Metodi Getter per accedere ai dati
+    public int getCodice() {
+        return codice;
     }
 
-    public String getUser() {
-        return user;
+    public int getNumeroPersone() {
+        return numeroPersone;
     }
 
-    public int getParticipants() {
-        return participants;
+    public String getClienteEmail() {
+        return clienteEmail;
     }
 
-    public int getCode() {
-        return code;
+    public int getViaggioId() {
+        return viaggioId;
     }
 
-    public void setCode(int code) {
-        this.code = code;
+    @Override
+    public String toString() {
+        // Un formato di stampa chiaro e utile per l'utente
+        return String.format("Prenotazione #%d | Viaggio ID: %d | Persone: %d",
+                codice, viaggioId, numeroPersone);
     }
 }

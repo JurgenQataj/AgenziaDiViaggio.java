@@ -1,17 +1,11 @@
 package model.dao;
 
-import model.Hotel;
 import model.OvernightStay;
-import model.Place;
-
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TripDetailsDAO implements BaseDAO<List<OvernightStay>> {
+public class TripDetailsDAO implements BaseDAO {
     private final int tripId;
 
     public TripDetailsDAO(int tripId) {
@@ -20,36 +14,36 @@ public class TripDetailsDAO implements BaseDAO<List<OvernightStay>> {
 
     @Override
     public List<OvernightStay> execute() throws SQLException {
-        final String procedure = "{CALL trip_details(?)}";
         List<OvernightStay> details = new ArrayList<>();
+        Connection conn = null;
+        CallableStatement cs = null;
+        ResultSet rs = null;
 
-        try (Connection conn = ConnectionFactory.getConnection();
-             CallableStatement cs = conn.prepareCall(procedure)) {
-
+        try {
+            conn = ConnectionFactory.getConnection();
+            cs = conn.prepareCall("{CALL trip_details(?)}");
             cs.setInt(1, this.tripId);
-            ResultSet rs = cs.executeQuery();
+
+            rs = cs.executeQuery();
 
             while (rs.next()) {
-                // ***** THIS IS THE CORRECTED LINE *****
-                // We now use the new constructor for Place, without the ID.
-                Place place = new Place(rs.getString("localita"), rs.getString("paese"));
+                // Legge l'hotelCode e gestisce correttamente il caso in cui sia NULL
+                int hotelCodeInt = rs.getInt("albergo_codice");
+                Integer hotelCode = rs.wasNull() ? null : hotelCodeInt;
 
-                Hotel hotel = null;
-                String hotelName = rs.getString("albergo");
-                if (hotelName != null && !rs.wasNull()) {
-                    // Create a partial Hotel object, just with the name
-                    hotel = new Hotel(0, hotelName, "", 0, "", "", "", "", "", "", null, 0);
-                }
-
-                OvernightStay overnightStay = new OvernightStay(
+                OvernightStay stay = new OvernightStay(
                         rs.getInt("id"),
                         rs.getDate("data_inizio"),
                         rs.getDate("data_fine"),
-                        place,
-                        hotel
+                        rs.getString("localita"),
+                        hotelCode
                 );
-                details.add(overnightStay);
+                details.add(stay);
             }
+        } finally {
+            if (rs != null) rs.close();
+            if (cs != null) cs.close();
+            if (conn != null) conn.close();
         }
         return details;
     }

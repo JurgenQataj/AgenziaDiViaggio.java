@@ -1,7 +1,7 @@
 package model.dao;
 
 import model.Role;
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,56 +9,59 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class ConnectionFactory {
-
     private static final Properties props = new Properties();
-    private static Role currentRole = Role.CLIENTE; // Il ruolo di default all'avvio
+    private static Role currentRole = Role.CLIENTE; // Inizia sempre con il ruolo a permessi minimi
 
-    // Blocco statico per caricare il file .properties una sola volta
+    // Blocco statico che viene eseguito una sola volta, quando la classe viene caricata
     static {
-        try {
-            props.load(new FileInputStream("resources/db.properties"));
+        // --- INIZIO CORREZIONE ---
+        // Carica il file db.properties come una risorsa dal classpath.
+        // Questo è il modo robusto e corretto di farlo.
+        try (InputStream input = ConnectionFactory.class.getClassLoader().getResourceAsStream("db.properties")) {
+
+            if (input == null) {
+                System.err.println("ERRORE: Impossibile trovare il file db.properties nel classpath.");
+            } else {
+                props.load(input);
+            }
+
         } catch (IOException e) {
-            throw new RuntimeException("Errore critico: impossibile caricare il file db.properties", e);
+            System.err.println("Errore durante il caricamento del file db.properties");
+            e.printStackTrace();
         }
+        // --- FINE CORREZIONE ---
     }
 
     /**
-     * Imposta il ruolo corrente che la factory userà per le prossime connessioni.
-     * Viene chiamato dai controller dopo un login успешный.
-     * @param role Il ruolo da impostare (CLIENTE o SEGRETERIA).
+     * Metodo statico per cambiare il ruolo corrente.
+     * Questo determina quali credenziali verranno usate per le connessioni successive.
+     * @param role Il nuovo ruolo (CLIENTE o SEGRETERIA).
      */
     public static void changeRole(Role role) {
-        if (role != null) {
-            currentRole = role;
-        }
+        currentRole = role;
     }
 
     /**
-     * Crea e restituisce una NUOVA connessione al database usando le credenziali
-     * appropriate per il ruolo attualmente attivo.
-     * @return Una nuova connessione al database.
-     * @throws SQLException Se la connessione fallisce.
+     * Restituisce una connessione al database usando le credenziali del ruolo corrente.
      */
     public static Connection getConnection() throws SQLException {
-        String url = props.getProperty("db_url");
+        String dbUrl = props.getProperty("db.url");
+        if (dbUrl == null || dbUrl.isEmpty()) {
+            // Questo controllo aggiuntivo ci aiuta a dare un errore più chiaro
+            throw new SQLException("La URL del database non è stata trovata in db.properties.");
+        }
+
         String user;
         String password;
 
-        // Sceglie le credenziali corrette in base al ruolo
         if (currentRole == Role.SEGRETERIA) {
-            user = props.getProperty("db_user_segreteria");
-            password = props.getProperty("db_password_segreteria");
-        } else { // Default al ruolo CLIENTE
-            user = props.getProperty("db_user_cliente");
-            password = props.getProperty("db_password_cliente");
+            user = props.getProperty("db.user.segreteria");
+            password = props.getProperty("db.password.segreteria");
+        } else { // Di default, o se il ruolo è CLIENTE
+            user = props.getProperty("db.user.cliente");
+            password = props.getProperty("db.password.cliente");
         }
 
-        // Controlla che le proprietà siano state caricate correttamente
-        if (url == null || user == null || password == null) {
-            throw new SQLException("Uno o più parametri di connessione (url, user, password) sono nulli. Controlla il file db.properties.");
-        }
-
-        // Restituisce una connessione nuova ogni volta
-        return DriverManager.getConnection(url, user, password);
+        return DriverManager.getConnection(dbUrl, user, password);
     }
 }
