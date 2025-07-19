@@ -1,80 +1,72 @@
 package controller;
 
 import model.Role;
+import model.dao.ConnectionFactory;
 import java.util.Scanner;
 
 public class AppController {
+
     private final Scanner scanner;
+    private boolean userLoggedIn = false;
 
     public AppController() {
         this.scanner = new Scanner(System.in);
     }
 
-    /**
-     * Metodo principale che avvia e gestisce il ciclo di vita dell'applicazione.
-     */
     public void start() {
         while (true) {
-            showInitialMenu();
-            int choice = getUserChoice();
-
-            switch (choice) {
-                case 1:
-                    // Delega al LoginController
-                    new LoginController(scanner, this).handleLogin();
-                    break;
-                case 2:
-                    // Delega al RegistrationController
-                    new RegistrationController(scanner).handleRegistration();
-                    break;
-                case 3:
-                    System.out.println("Arrivederci!");
-                    return; // Esce dal ciclo e termina l'applicazione
-                default:
-                    System.out.println("Scelta non valida. Riprova.");
+            if (!userLoggedIn) {
+                showMainMenu();
             }
         }
     }
 
-    private void showInitialMenu() {
-        System.out.println("\n--- BENVENUTO NELL'AGENZIA DI VIAGGI ---");
-        System.out.println("1) Esegui il Login");
+    private void showMainMenu() {
+        System.out.println("\n--- BENVENUTO NELL'AGENZIA VIAGGI ---");
+        System.out.println("1) Login");
         System.out.println("2) Registrati");
         System.out.println("3) Esci");
         System.out.print("Scegli un'opzione: ");
-    }
 
-    /**
-     * Questo metodo viene chiamato dal LoginController in caso di successo.
-     * Avvia il controller specifico per il ruolo (Cliente o Segreteria).
-     * @param role Il ruolo dell'utente loggato.
-     * @param userEmail L'email dell'utente, da passare al controller del cliente.
-     */
-    public void onLoginSuccess(Role role, String userEmail) {
-        if (role == Role.CLIENTE) {
-            ClienteController clienteController = new ClienteController(scanner, userEmail, this);
-            clienteController.start(); // Il cliente controller avrà il suo ciclo di menu
-        } else if (role == Role.SEGRETERIA) {
-            SegreteriaController segreteriaController = new SegreteriaController(scanner, this);
-            segreteriaController.start(); // Il segreteria controller avrà il suo ciclo di menu
-        }
-    }
-
-    /**
-     * Metodo chiamato dai controller Cliente/Segreteria per effettuare il logout.
-     * L'azione di logout consiste semplicemente nel terminare il menu specifico del ruolo.
-     * Il controllo tornerà al ciclo `while` del metodo `start()`, mostrando di nuovo il menu iniziale.
-     */
-    public void logout() {
-        System.out.println("Logout effettuato con successo.");
-    }
-
-    private int getUserChoice() {
         try {
-            // Usiamo nextLine() per consumare l'intera riga ed evitare problemi con input successivi
-            return Integer.parseInt(scanner.nextLine());
+            int choice = Integer.parseInt(scanner.nextLine());
+            switch (choice) {
+                case 1:
+                    LoginController loginController = new LoginController(scanner, this);
+                    // Modifichiamo il login per restituire anche l'email
+                    LoginResult result = loginController.login(); // Assumendo che login() restituisca un oggetto LoginResult
+
+                    if (result != null && result.getRole() != null) {
+                        userLoggedIn = true;
+                        if (result.getRole() == Role.CLIENTE) {
+                            // ################### ECCO LA CORREZIONE ###################
+                            // Passiamo l'email ottenuta dal login al costruttore
+                            new ClienteController(this, result.getEmail()).start();
+                            // #########################################################
+                        } else if (result.getRole() == Role.SEGRETERIA) {
+                            new SegreteriaController(this).start();
+                        }
+                    }
+                    break;
+                case 2:
+                    // new RegistrationController(scanner).register();
+                    break;
+                case 3:
+                    System.out.println("Arrivederci!");
+                    System.exit(0);
+                    break;
+                default:
+                    System.out.println("Opzione non valida.");
+            }
         } catch (NumberFormatException e) {
-            return -1; // Ritorna un valore che causerà l'errore di default nello switch
+            System.out.println("ERRORE: Inserisci un'opzione numerica.");
+        } catch (Exception e) {
+            System.out.println("ERRORE INASPETTATO: " + e.getMessage());
         }
+    }
+
+    public void logout() {
+        this.userLoggedIn = false;
+        System.out.println("Sei stato disconnesso.");
     }
 }

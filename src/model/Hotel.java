@@ -1,19 +1,25 @@
 package model;
 
-public class Hotel {
-    private final int codice;
-    private final String nome;
-    private final String referente;
-    private final int capienza;
-    private final String via;
-    private final String civico;
-    private final String cp;
-    private final String email;
-    private final String telefono;
-    private final String fax;
-    private final Place localita; // Contiene l'intero oggetto Place
-    private final double costoNottePersona;
+import java.text.NumberFormat;
+import java.util.Locale;
 
+public class Hotel {
+    private int codice;
+    private String nome;
+    private String referente;
+    private int capienza;
+    private String via;
+    private String civico;
+    private String cp;
+    private String email;
+    private String telefono;
+    private String fax;
+    private Place localita;
+    private double costoNottePersona;
+
+    /**
+     * Costruttore completo, usato per creare o inserire un nuovo albergo con tutti i dettagli.
+     */
     public Hotel(int codice, String nome, String referente, int capienza, String via, String civico, String cp, String email, String telefono, String fax, Place localita, double costoNottePersona) {
         this.codice = codice;
         this.nome = nome;
@@ -29,7 +35,19 @@ public class Hotel {
         this.costoNottePersona = costoNottePersona;
     }
 
-    // Getters per il DAO
+    /**
+     * Costruttore semplificato, usato per mostrare una lista di hotel disponibili,
+     * senza bisogno di caricare tutti i dettagli dal database.
+     */
+    public Hotel(int codice, String nome, int capienza, double costoNottePersona) {
+        this.codice = codice;
+        this.nome = nome;
+        this.capienza = capienza;
+        this.costoNottePersona = costoNottePersona;
+    }
+
+    // --- GETTERS ---
+    public int getCodice() { return codice; }
     public String getNome() { return nome; }
     public String getReferente() { return referente; }
     public int getCapienza() { return capienza; }
@@ -39,13 +57,34 @@ public class Hotel {
     public String getEmail() { return email; }
     public String getTelefono() { return telefono; }
     public String getFax() { return fax; }
-    // Getter speciale che restituisce solo il nome della località come String
-    public String getLocalitaNome() { return localita.getNome(); }
+    public Place getLocalita() { return localita; }
     public double getCostoNottePersona() { return costoNottePersona; }
+
+    // --- SETTERS ---
+    public void setCodice(int codice) { this.codice = codice; }
+    public void setNome(String nome) { this.nome = nome; }
+    public void setReferente(String referente) { this.referente = referente; }
+    public void setCapienza(int capienza) { this.capienza = capienza; }
+    public void setVia(String via) { this.via = via; }
+    public void setCivico(String civico) { this.civico = civico; }
+    public void setCp(String cp) { this.cp = cp; }
+    public void setEmail(String email) { this.email = email; }
+    public void setTelefono(String telefono) { this.telefono = telefono; }
+    public void setFax(String fax) { this.fax = fax; }
+    public void setLocalita(Place localita) { this.localita = localita; }
+    public void setCostoNottePersona(double costoNottePersona) { this.costoNottePersona = costoNottePersona; }
 
     @Override
     public String toString() {
-        return String.format("Hotel #%d: %s, %s - Capienza: %d, Costo/Notte: %.2f €",
-                codice, nome, localita.getNome(), capienza, costoNottePersona);
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.ITALY);
+
+        // Se l'hotel è stato creato con il costruttore semplificato, mostra solo i dati rilevanti.
+        if (this.referente == null && this.via == null) {
+            return "Hotel [Codice: " + codice + ", Nome: '" + nome + "', Capienza: " + capienza + ", Costo/Notte: " + currencyFormatter.format(costoNottePersona) + "]";
+        }
+
+        // Altrimenti, mostra la versione completa, gestendo la possibile assenza della località.
+        String nomeLocalita = (localita != null) ? localita.getNome() : "N/A";
+        return "Hotel [Codice: " + codice + ", Nome: '" + nome + "', Referente: '" + referente + "', Capienza: " + capienza + ", Indirizzo: " + via + " " + civico + ", " + cp + " " + nomeLocalita + "]";
     }
 }

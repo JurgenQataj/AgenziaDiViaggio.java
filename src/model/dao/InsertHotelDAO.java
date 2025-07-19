@@ -30,7 +30,7 @@ public class InsertHotelDAO implements BaseDAO {
             cs.setString(7, hotel.getEmail());
             cs.setString(8, hotel.getTelefono());
             cs.setString(9, hotel.getFax());
-            cs.setString(10, hotel.getLocalitaNome()); // Usa il getter corretto
+            cs.setString(10, hotel.getLocalita().getNome());
             cs.setDouble(11, hotel.getCostoNottePersona());
 
             cs.execute();

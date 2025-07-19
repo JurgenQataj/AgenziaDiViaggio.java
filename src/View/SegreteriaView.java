@@ -24,22 +24,34 @@ public class SegreteriaView {
         System.out.println("2) Crea un nuovo itinerario-modello");
         System.out.println("3) Inserisci una nuova località");
         System.out.println("4) Inserisci un nuovo albergo");
-        System.out.println("5) Elenca tutti i viaggi futuri");
-        System.out.println("6) Elenca i dettagli di un viaggio");
-        System.out.println("7) Elenca tutte le località");
-        System.out.println("8) Elenca tutti gli alberghi");
-        System.out.println("9) Genera report guadagni/perdite di un viaggio");
-        System.out.println("10) Assegna autobus ad un viaggio");
-        System.out.println("11) Assegna albergo a un pernottamento");
-        System.out.println("12) Esegui una prenotazione per un cliente");
-        System.out.println("13) Cancella una prenotazione");
-        System.out.println("14) Esci");
+        System.out.println("5) Inserisci un nuovo autobus");
+        System.out.println("6) Elenca tutti i viaggi futuri");
+        System.out.println("7) Elenca i dettagli di un viaggio");
+        System.out.println("8) Elenca tutte le località");
+        System.out.println("9) Elenca tutti gli alberghi");
+        System.out.println("10) Genera report guadagni/perdite di un viaggio");
+        System.out.println("11) Assegna autobus ad un viaggio");
+        System.out.println("12) Assegna albergo a un pernottamento");
+        System.out.println("13) Esegui una prenotazione per un cliente");
+        System.out.println("14) Cancella una prenotazione");
+        System.out.println("15) Esci");
         System.out.print("Scegli un'opzione: ");
         try {
             return Integer.parseInt(reader.readLine());
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+
+    /**
+     * Mostra un messaggio e legge una linea di input dall'utente.
+     * @param message Il messaggio da mostrare.
+     * @return La stringa inserita.
+     * @throws IOException
+     */
+    public String getInput(String message) throws IOException {
+        System.out.print(message);
+        return reader.readLine();
     }
 
     public void showMessage(String message) {
@@ -131,8 +143,20 @@ public class SegreteriaView {
         return new Place(nome, paese);
     }
 
+    public Autobus getAutobusValues() throws IOException {
+        System.out.println("\n--- Inserimento Nuovo Autobus ---");
+        System.out.print("Inserisci la targa (es. AA123BB): ");
+        String targa = reader.readLine();
+        System.out.print("Inserisci la capienza: ");
+        int capienza = Integer.parseInt(reader.readLine());
+        System.out.print("Inserisci il costo giornaliero: ");
+        double costoGiornaliero = Double.parseDouble(reader.readLine());
+        return new Autobus(targa, capienza, costoGiornaliero);
+    }
+
     public Hotel getHotelValues(List<Place> places) throws IOException {
-        System.out.println("\nLocalità esistenti:");
+        System.out.println("\n--- Inserimento Nuovo Albergo ---");
+        System.out.println("Località esistenti:");
         places.forEach(p -> System.out.println("- " + p.getNome()));
 
         Place selectedPlace = null;

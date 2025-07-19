@@ -1,4 +1,4 @@
-package view;
+package View;
 
 import exceptions.DatabaseException; // <-- AGGIUNGI QUESTA RIGA
 import model.Trip;
@@ -49,8 +49,9 @@ public class ClienteView extends View {
      * Questo è il metodo che mancava e che causava l'errore.
      * @param e L'eccezione del database da stampare.
      */
-    public void printError(DatabaseException e) {
-        System.err.println("ERRORE: " + e.getMessage());
+    // Versione corretta e più flessibile
+    public void printError(Exception e) { // <-- Adesso accetta qualsiasi tipo di eccezione
+        System.out.println("ERRORE: " + e.getMessage());
     }
 
     public int getTripId() throws IOException {

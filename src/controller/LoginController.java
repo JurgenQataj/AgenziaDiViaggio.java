@@ -7,7 +7,9 @@ import model.dao.LoginDAO;
 import java.sql.SQLException;
 import java.util.Scanner;
 
+// La dichiarazione della classe è fondamentale per risolvere l'errore
 public class LoginController {
+
     private final Scanner scanner;
     private final AppController appController;
 
@@ -17,29 +19,31 @@ public class LoginController {
     }
 
     /**
-     * Gestisce il flusso di interazione per il login.
+     * Gestisce il processo di login.
+     * Chiede le credenziali all'utente e restituisce un oggetto LoginResult
+     * contenente l'email e il ruolo se il login ha successo.
+     * @return Un oggetto LoginResult o null in caso di fallimento.
+     * @throws SQLException
      */
-    public void handleLogin() {
+    public LoginResult login() throws SQLException {
         System.out.println("\n--- LOGIN ---");
-        System.out.print("Inserisci email: ");
-        String email = scanner.nextLine(); // Abbiamo l'email qui
-        System.out.print("Inserisci password: ");
+        System.out.print("Email: ");
+        String email = scanner.nextLine();
+        System.out.print("Password: ");
         String password = scanner.nextLine();
 
         LoginCredentials credentials = new LoginCredentials(email, password);
+        LoginDAO loginDAO = new LoginDAO(credentials);
 
-        try {
-            LoginDAO dao = new LoginDAO(credentials);
-            Role role = dao.execute();
+        Role role = loginDAO.execute(); // Il DAO chiama la procedura nel DB
 
-            if (role != null) {
-                // --- CORREZIONE: Usiamo la variabile 'email' che già abbiamo ---
-                appController.onLoginSuccess(role, email);
-            } else {
-                System.out.println("ERRORE: Email o password non validi.");
-            }
-        } catch (SQLException e) {
-            System.out.println("ERRORE DATABASE: " + e.getMessage());
+        if (role != null) {
+            System.out.println("Login effettuato con successo. Ruolo: " + role);
+            // Restituisce un oggetto che contiene sia l'email che il ruolo
+            return new LoginResult(email, role);
+        } else {
+            System.out.println("ERRORE: Credenziali non valide. Riprova.");
+            return null;
         }
     }
-}
+} // <-- Assicurati che questa parentesi graffa di chiusura non manchi
