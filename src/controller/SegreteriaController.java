@@ -2,6 +2,7 @@ package controller;
 
 import View.SegreteriaView;
 import model.*;
+import model.dao.ListItinerariDAO;
 import model.dao.*;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -66,9 +67,23 @@ public class SegreteriaController {
         }
 
         java.util.Date[] dates = view.getTripDates();
+
+        // --- NUOVO BLOCCO DI CODICE AGGIUNTO ---
+        // Controllo sulla durata del viaggio direttamente nell'applicazione.
+        long diffInMillies = Math.abs(dates[1].getTime() - dates[0].getTime());
+        // Calcoliamo i giorni e aggiungiamo +1 per includere il giorno di partenza
+        long diffInDays = java.util.concurrent.TimeUnit.DAYS.convert(diffInMillies, java.util.concurrent.TimeUnit.MILLISECONDS) + 1;
+
+        if (diffInDays > 7) {
+            view.printError(new Exception("ERRORE: La durata del viaggio non può superare i 7 giorni. Viaggio non creato."));
+            return; // Interrompe l'esecuzione del metodo se la durata non è valida
+        }
+        // --- FINE DEL NUOVO BLOCCO ---
+
         Date sqlStartDate = new Date(dates[0].getTime());
         Date sqlEndDate = new Date(dates[1].getTime());
 
+        // Il resto del metodo rimane esattamente come prima
         int nuovoViaggioId = new InsertTripDAO(itinerarioId, sqlStartDate, sqlEndDate).execute();
         view.showMessage("=> Viaggio creato con successo con ID: " + nuovoViaggioId);
 
@@ -156,8 +171,10 @@ public class SegreteriaController {
     }
 
     private void generateReports() throws SQLException, IOException {
+
         int tripId = view.getTripId();
         TripReport report = new ReportDAO(tripId).execute();
+
         if (report != null) {
             view.showMessage("\n--- Report per il Viaggio #" + tripId + " ---");
             view.showMessage(report.toString());

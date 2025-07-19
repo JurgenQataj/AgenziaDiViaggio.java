@@ -34,7 +34,7 @@ public class RegistrationView {
     }
 
     public void showSuccessMessage() {
-        System.out.println("✅ Registrazione effettuata con successo! Ora puoi effettuare il login.");
+        System.out.println("Registrazione effettuata con successo! Ora puoi effettuare il login.");
     }
 
     public void showErrorMessage(String message) {

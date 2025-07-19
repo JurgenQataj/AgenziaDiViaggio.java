@@ -1,61 +1,80 @@
 package model.dao;
 
-import model.Booking;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import model.BookingDetails;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ListCancellableBookingsDAO implements BaseDAO {
-    private final String userEmail;
+/**
+ * DAO per recuperare l'elenco delle prenotazioni annullabili per un dato cliente.
+ * Utilizza la stored procedure list_cancellable_bookings.
+ */
+public class ListCancellableBookingsDAO implements BaseDAO<List<BookingDetails>> {
 
-    public ListCancellableBookingsDAO(String userEmail) {
-        this.userEmail = userEmail;
+    private final String clientEmail;
+
+    public ListCancellableBookingsDAO(String clientEmail) {
+        this.clientEmail = clientEmail;
     }
 
-    /**
-     * Esegue una query per trovare tutte le prenotazioni di un utente specifico
-     * che possono ancora essere cancellate (a più di 20 giorni dalla partenza).
-     * @return Una lista di oggetti Booking cancellabili.
-     * @throws SQLException in caso di errori di accesso al database.
-     */
-    public List<Booking> execute() throws SQLException {
-        List<Booking> cancellableBookings = new ArrayList<>();
+    @Override
+    public List<BookingDetails> execute() {
+        List<BookingDetails> bookings = new ArrayList<>();
         Connection conn = null;
-        PreparedStatement ps = null;
+        CallableStatement cs = null;
         ResultSet rs = null;
-
-        // La query unisce prenotazione e viaggio per filtrare in base alla data di partenza
-        String query = "SELECT p.codice, p.numero_persone, p.cliente_email, p.viaggio_id " +
-                "FROM prenotazione p " +
-                "JOIN viaggio v ON p.viaggio_id = v.id " +
-                "WHERE p.cliente_email = ? AND DATEDIFF(v.data_partenza, CURDATE()) >= 20";
 
         try {
             conn = ConnectionFactory.getConnection();
-            ps = conn.prepareStatement(query);
-            ps.setString(1, this.userEmail);
-
-            rs = ps.executeQuery();
+            cs = conn.prepareCall("{CALL list_cancellable_bookings(?)}");
+            cs.setString(1, this.clientEmail);
+            rs = cs.executeQuery();
 
             while (rs.next()) {
-                Booking booking = new Booking(
-                        rs.getInt("codice"),
-                        rs.getInt("numero_persone"),
-                        rs.getString("cliente_email"),
-                        rs.getInt("viaggio_id")
-                );
-                cancellableBookings.add(booking);
+                int codice = rs.getInt("codice");
+                String titoloViaggio = rs.getString("titolo_viaggio");
+                Date dataPartenza = rs.getDate("data_partenza");
+                int numeroPersone = rs.getInt("numero_persone");
+
+                // ↓↓↓↓↓↓↓↓↓↓↓↓ ECCO LA CORREZIONE FINALE ↓↓↓↓↓↓↓↓↓↓↓↓
+                // I parametri ora sono nell'ordine corretto: (int, int, String, Date)
+                BookingDetails booking = new BookingDetails(codice, numeroPersone, titoloViaggio, dataPartenza);
+                bookings.add(booking);
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         } finally {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (conn != null) conn.close();
+            close(rs);
+            close(cs);
+            close(conn);
         }
 
-        return cancellableBookings;
+        return bookings;
+    }
+
+    // Metodi di utilità per la chiusura sicura delle risorse
+    private static void close(ResultSet rs) {
+        if (rs != null) {
+            try {
+                rs.close();
+            } catch (SQLException e) { /* Ignora */ }
+        }
+    }
+
+    private static void close(CallableStatement cs) {
+        if (cs != null) {
+            try {
+                cs.close();
+            } catch (SQLException e) { /* Ignora */ }
+        }
+    }
+
+    private static void close(Connection conn) {
+        if (conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException e) { /* Ignora */ }
+        }
     }
 }
