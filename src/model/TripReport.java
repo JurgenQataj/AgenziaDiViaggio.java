@@ -8,14 +8,13 @@ public class TripReport {
     private final String titoloViaggio;
     private final int partecipanti;
     private final double guadagnoOPerdita;
-    private final List<OvernightStay> overnightStays; // Aggiunto campo per i pernottamenti
+    private final List<OvernightStay> overnightStays;
 
-    // Costruttore aggiornato per accettare la lista dei pernottamenti
     public TripReport(String titoloViaggio, int partecipanti, double guadagnoOPerdita, List<OvernightStay> stays) {
         this.titoloViaggio = titoloViaggio;
         this.partecipanti = partecipanti;
         this.guadagnoOPerdita = guadagnoOPerdita;
-        this.overnightStays = stays; // Inizializziamo il campo, risolvendo l'errore!
+        this.overnightStays = stays;
     }
 
     @Override
@@ -23,10 +22,10 @@ public class TripReport {
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(Locale.ITALY);
         StringBuilder sb = new StringBuilder();
 
+        sb.append("\n--- REPORT DEL VIAGGIO ---\n");
         sb.append("Titolo Viaggio: ").append(titoloViaggio).append("\n");
         sb.append("Numero Partecipanti: ").append(partecipanti).append("\n");
 
-        // Ora possiamo ciclare su 'overnightStays' perché non è più null
         if (overnightStays != null && !overnightStays.isEmpty()) {
             sb.append("Tappe del Viaggio:\n");
             for (OvernightStay stay : overnightStays) {
@@ -39,6 +38,7 @@ public class TripReport {
         } else {
             sb.append("Perdita Finale: ").append(currencyFormatter.format(guadagnoOPerdita));
         }
+        sb.append("\n--------------------------\n");
 
         return sb.toString();
     }

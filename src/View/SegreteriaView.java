@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public class SegreteriaView {
     private final BufferedReader reader;
+    private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
     public SegreteriaView() {
         this.reader = new BufferedReader(new InputStreamReader(System.in));
@@ -43,6 +44,107 @@ public class SegreteriaView {
         }
     }
 
+    // =================================================================
+    // NUOVI METODI PER CREAZIONE ITINERARIO E VIAGGIO
+    // =================================================================
+
+    /**
+     * Guida l'utente nella creazione di un nuovo itinerario-modello.
+     * Raccoglie titolo, costo e una lista di tappe in modo interattivo.
+     * @param luoghiDisponibili La lista delle località disponibili per le tappe.
+     * @return Un oggetto Itinerario completo, pronto per essere salvato.
+     * @throws IOException
+     */
+    public Itinerario getNewItinerarioDetails(List<Place> luoghiDisponibili) throws IOException {
+        System.out.println("\n--- Creazione Nuovo Itinerario-Modello ---");
+        System.out.print("Inserisci il titolo del nuovo itinerario: ");
+        String titolo = reader.readLine();
+        System.out.print("Inserisci il costo per persona: ");
+        double costo = Double.parseDouble(reader.readLine());
+
+        List<Tappa> tappe = new ArrayList<>();
+        int giorniTotali = 0;
+
+        System.out.println("\n--- Aggiunta Tappe ---");
+        System.out.println("Località disponibili:");
+        luoghiDisponibili.forEach(p -> System.out.println("- " + p.getNome()));
+
+        while (true) {
+            System.out.print("\nInserisci la località per la prossima tappa (o 'fine' per terminare): ");
+            String nomeLocalita = reader.readLine();
+            if (nomeLocalita.equalsIgnoreCase("fine")) {
+                if(tappe.isEmpty()){
+                    showMessage("ERRORE: Un itinerario deve avere almeno una tappa.");
+                    continue;
+                }
+                break;
+            }
+
+            // Validazione della località inserita
+            boolean localitaValida = luoghiDisponibili.stream().anyMatch(p -> p.getNome().equalsIgnoreCase(nomeLocalita));
+            if (!localitaValida) {
+                System.out.println("ERRORE: Località non valida. Riprova.");
+                continue;
+            }
+
+            System.out.print("Inserisci il numero di notti per la tappa a " + nomeLocalita + ": ");
+            try {
+                int notti = Integer.parseInt(reader.readLine());
+                if (notti <= 0) {
+                    System.out.println("ERRORE: Il numero di notti deve essere positivo.");
+                    continue;
+                }
+                if (giorniTotali + notti > 7) {
+                    System.out.println("ERRORE: La durata totale dell'itinerario non può superare i 7 giorni.");
+                    continue;
+                }
+
+                tappe.add(new Tappa(nomeLocalita, notti));
+                giorniTotali += notti;
+                System.out.println("Tappa aggiunta! Durata totale attuale: " + giorniTotali + " giorni.");
+
+            } catch (NumberFormatException e) {
+                System.out.println("ERRORE: Inserisci un numero valido.");
+            }
+        }
+
+        return new Itinerario(titolo, costo, tappe);
+    }
+
+    /**
+     * Chiede all'utente di selezionare un itinerario e di inserire una data di partenza.
+     * @param itinerariDisponibili La lista di itinerari tra cui scegliere.
+     * @return Un oggetto Trip con l'ID dell'itinerario e la data di partenza impostati.
+     * @throws IOException
+     * @throws ParseException
+     */
+    public Trip getNewTripDetails(List<Itinerario> itinerariDisponibili) throws IOException, ParseException {
+        System.out.println("\n--- Creazione Nuovo Viaggio da Itinerario ---");
+        if (itinerariDisponibili == null || itinerariDisponibili.isEmpty()) {
+            showMessage("Nessun itinerario-modello disponibile per creare un viaggio.");
+            return null;
+        }
+
+        System.out.println("Itinerari-modello disponibili:");
+        printObjects(itinerariDisponibili);
+
+        System.out.print("Scegli l'ID dell'itinerario da usare: ");
+        int itinerarioId = Integer.parseInt(reader.readLine());
+
+        System.out.print("Inserisci la data di partenza (YYYY-MM-DD): ");
+        Date dataPartenza = sdf.parse(reader.readLine());
+
+        Trip trip = new Trip();
+        trip.setItinerarioId(itinerarioId);
+        trip.setDataPartenza(dataPartenza);
+
+        return trip;
+    }
+
+    // =================================================================
+    // METODI ESISTENTI (INVARIATI O CON PICCOLE MODIFICHE)
+    // =================================================================
+
     public String getInput(String message) throws IOException {
         System.out.print(message);
         return reader.readLine();
@@ -71,12 +173,6 @@ public class SegreteriaView {
         return Integer.parseInt(reader.readLine());
     }
 
-    // ################### METODO MANCANTE AGGIUNTO ###################
-    /**
-     * Chiede all'utente il codice di una prenotazione da cancellare.
-     * @return il codice della prenotazione, o un valore non valido per annullare.
-     * @throws IOException
-     */
     public int getBookingCodeToCancel() throws IOException {
         System.out.print("Inserisci il codice della prenotazione da cancellare (o 0 per annullare): ");
         try {
@@ -85,7 +181,6 @@ public class SegreteriaView {
             return -1;
         }
     }
-    // ###############################################################
 
     public String getClientEmail() throws IOException {
         System.out.print("Inserisci l'email del cliente: ");
@@ -95,49 +190,6 @@ public class SegreteriaView {
     public int getParticipants() throws IOException {
         System.out.print("Inserisci il numero di partecipanti: ");
         return Integer.parseInt(reader.readLine());
-    }
-
-    public int askForItinerario(List<Itinerario> itinerari) throws IOException {
-        System.out.println("Itinerari-modello disponibili:");
-        printObjects(itinerari);
-        System.out.print("Scegli l'ID dell'itinerario da usare (o 0 per annullare): ");
-        return Integer.parseInt(reader.readLine());
-    }
-
-    public Date[] getTripDates() throws IOException, ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        System.out.print("Inserisci la data di partenza (YYYY-MM-DD): ");
-        Date startDate = sdf.parse(reader.readLine());
-        System.out.print("Inserisci la data di rientro (YYYY-MM-DD): ");
-        Date endDate = sdf.parse(reader.readLine());
-        return new Date[]{startDate, endDate};
-    }
-
-    public int getOvernightsNumber() throws IOException {
-        System.out.print("Quante tappe (pernottamenti) vuoi aggiungere? ");
-        return Integer.parseInt(reader.readLine());
-    }
-
-    public OvernightStay getOvernightData(List<Place> availablePlaces) throws IOException, ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        System.out.println("\n-- Aggiunta Nuova Tappa --");
-        System.out.println("Località disponibili:");
-        availablePlaces.forEach(p -> System.out.println("- " + p.getNome()));
-        System.out.print("Inserisci il nome della località per questa tappa: ");
-        String nomeLocalita = reader.readLine();
-        System.out.print("Data inizio pernottamento (YYYY-MM-DD): ");
-        Date dataInizioP = sdf.parse(reader.readLine());
-        System.out.print("Data fine pernottamento (YYYY-MM-DD): ");
-        Date dataFineP = sdf.parse(reader.readLine());
-        return new OvernightStay(dataInizioP, dataFineP, nomeLocalita);
-    }
-
-    public Itinerario getItinerarioValues() throws IOException {
-        System.out.print("Inserisci il titolo del nuovo itinerario: ");
-        String titolo = reader.readLine();
-        System.out.print("Inserisci il costo per persona: ");
-        double costo = Double.parseDouble(reader.readLine());
-        return new Itinerario(0, titolo, costo);
     }
 
     public Place getPlaceValues() throws IOException {
@@ -164,16 +216,18 @@ public class SegreteriaView {
         System.out.println("Località esistenti:");
         places.forEach(p -> System.out.println("- " + p.getNome()));
 
-        Place selectedPlace = null;
-        while (selectedPlace == null) {
-            System.out.print("In quale località si trova l'albergo? ");
-            String nomeLocalita = reader.readLine();
+        String nomeLocalita;
+        Optional<Place> selectedPlace;
 
-            Optional<Place> foundPlace = places.stream()
-                    .filter(p -> p.getNome().equalsIgnoreCase(nomeLocalita))
+        while (true) {
+            System.out.print("In quale località si trova l'albergo? ");
+            nomeLocalita = reader.readLine();
+            String finalNomeLocalita = nomeLocalita;
+            selectedPlace = places.stream()
+                    .filter(p -> p.getNome().equalsIgnoreCase(finalNomeLocalita))
                     .findFirst();
-            if (foundPlace.isPresent()) {
-                selectedPlace = foundPlace.get();
+            if (selectedPlace.isPresent()) {
+                break;
             } else {
                 System.out.println("ERRORE: Località non trovata. Riprova.");
             }
@@ -190,8 +244,10 @@ public class SegreteriaView {
         System.out.print("Fax (opzionale): "); String fax = reader.readLine();
         System.out.print("Costo per notte a persona: "); double costoNotte = Double.parseDouble(reader.readLine());
 
-        return new Hotel(0, nome, referente, capienza, via, civico, cp, email, telefono, fax, selectedPlace, costoNotte);
+        return new Hotel(0, nome, referente, capienza, via, civico, cp, email, telefono, fax, selectedPlace.get(), costoNotte);
     }
+
+    // Metodi per l'assegnazione di bus e hotel (invariati)
 
     public List<String> getBusPlates() throws IOException {
         System.out.print("Inserisci le targhe degli autobus da assegnare (separate da una virgola): ");

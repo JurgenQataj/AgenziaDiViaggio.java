@@ -2,16 +2,15 @@ package controller;
 
 import View.SegreteriaView;
 import model.*;
-import model.dao.ListItinerariDAO;
 import model.dao.*;
+
+import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.text.ParseException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.io.IOException;
 
 public class SegreteriaController {
 
@@ -22,6 +21,8 @@ public class SegreteriaController {
         this.appController = appController;
         this.view = new SegreteriaView();
     }
+
+    // Inserisci questa versione nel tuo file src/controller/SegreteriaController.java
 
     public void start() {
         ConnectionFactory.changeRole(Role.SEGRETERIA);
@@ -50,62 +51,93 @@ public class SegreteriaController {
                     }
                     default -> view.showMessage("Opzione non valida. Riprova.");
                 }
+                // --- BLOCCO CATCH MODIFICATO ---
+            } catch (SQLException e) {
+                // Se l'eccezione è una SQLException (dal database), mostra solo il messaggio.
+                // Questo gestisce elegantemente le regole di business come la chiusura delle prenotazioni.
+                view.showMessage("ERRORE: " + e.getMessage());
+            } catch (IOException | ParseException | NumberFormatException e) {
+                // Gestisce errori di input comuni senza mostrare dettagli tecnici.
+                view.showMessage("ERRORE DI INPUT: Controlla i dati inseriti e riprova. (" + e.getMessage() + ")");
             } catch (Exception e) {
-                view.printError(e);
+                // Gestisce tutti gli altri errori imprevisti e mostra i dettagli per il debug.
+                view.showMessage("Si è verificato un errore inaspettato.");
+                view.printError(e); // Mostra lo stack trace solo per errori gravi
             }
+            // --- FINE MODIFICA ---
         }
     }
 
+    /**
+     * Gestisce la creazione di un nuovo viaggio.
+     * Utilizza il nuovo metodo della View per selezionare un itinerario e una data di partenza.
+     */
     private void createTrip() throws SQLException, IOException, ParseException {
-        view.showMessage("\n--- Inizio Creazione Nuovo Viaggio ---");
-        List<Itinerario> itinerari = new ListItinerariDAO().execute();
+        view.showMessage("\n--- Creazione Nuovo Viaggio da Itinerario ---");
+        List<Itinerario> itinerariDisponibili = new ListItinerariDAO().execute();
+        if (itinerariDisponibili == null || itinerariDisponibili.isEmpty()) {
+            view.showMessage("Nessun itinerario-modello disponibile. Creane prima uno.");
+            return;
+        }
 
-        int itinerarioId = view.askForItinerario(itinerari);
-        if (itinerarioId == 0) {
+        // 1. Chiama il nuovo metodo della View che gestisce l'interazione
+        Trip tripDetails = view.getNewTripDetails(itinerariDisponibili);
+
+        // L'utente potrebbe aver annullato l'operazione nella view
+        if (tripDetails == null) {
             view.showMessage("Creazione viaggio annullata.");
             return;
         }
 
-        java.util.Date[] dates = view.getTripDates();
+        // 2. Estrai i dati dall'oggetto Trip e chiama il DAO
+        int itinerarioId = tripDetails.getItinerarioId();
+        Date sqlStartDate = new Date(tripDetails.getDataPartenza().getTime());
 
-        // --- NUOVO BLOCCO DI CODICE AGGIUNTO ---
-        // Controllo sulla durata del viaggio direttamente nell'applicazione.
-        long diffInMillies = Math.abs(dates[1].getTime() - dates[0].getTime());
-        // Calcoliamo i giorni e aggiungiamo +1 per includere il giorno di partenza
-        long diffInDays = java.util.concurrent.TimeUnit.DAYS.convert(diffInMillies, java.util.concurrent.TimeUnit.MILLISECONDS) + 1;
+        int nuovoViaggioId = new InsertTripDAO(itinerarioId, sqlStartDate).execute();
 
-        if (diffInDays > 7) {
-            view.printError(new Exception("ERRORE: La durata del viaggio non può superare i 7 giorni. Viaggio non creato."));
-            return; // Interrompe l'esecuzione del metodo se la durata non è valida
-        }
-        // --- FINE DEL NUOVO BLOCCO ---
-
-        Date sqlStartDate = new Date(dates[0].getTime());
-        Date sqlEndDate = new Date(dates[1].getTime());
-
-        // Il resto del metodo rimane esattamente come prima
-        int nuovoViaggioId = new InsertTripDAO(itinerarioId, sqlStartDate, sqlEndDate).execute();
-        view.showMessage("=> Viaggio creato con successo con ID: " + nuovoViaggioId);
-
-        int numPernottamenti = view.getOvernightsNumber();
-
-        if (numPernottamenti > 0) {
-            List<Place> availablePlaces = new ListPlacesDAO().execute();
-            for (int i = 0; i < numPernottamenti; i++) {
-                OvernightStay pernottamento = view.getOvernightData(availablePlaces);
-                new InsertOvernightStayDAO(nuovoViaggioId, pernottamento).execute();
-                view.showMessage("--> Tappa " + (i + 1) + " aggiunta con successo!");
-            }
+        // 3. Mostra il risultato. Tutta la logica di creazione dei pernottamenti è ora nel DB.
+        if (nuovoViaggioId != -1) {
+            view.showMessage("=> Viaggio creato con successo con ID: " + nuovoViaggioId);
+            view.showMessage("I pernottamenti sono stati generati automaticamente.");
+        } else {
+            view.showMessage("ERRORE: La creazione del viaggio è fallita.");
         }
         view.showMessage("--- Creazione Viaggio Completata ---");
     }
 
+    /**
+     * Gestisce la creazione di un nuovo itinerario-modello.
+     * Utilizza il nuovo metodo interattivo della View per costruire l'itinerario con le sue tappe.
+     */
     private void createItinerario() throws SQLException, IOException {
-        view.showMessage("\n--- Creazione Nuovo Itinerario-Modello ---");
-        Itinerario nuovoItinerario = view.getItinerarioValues();
-        new InsertItinerarioDAO(nuovoItinerario).execute();
-        view.showMessage("Itinerario-modello '" + nuovoItinerario.getTitolo() + "' creato con successo!");
+        // 1. Recupera le località disponibili da mostrare all'utente
+        List<Place> luoghiDisponibili = new ListPlacesDAO().execute();
+        if (luoghiDisponibili.isEmpty()) {
+            view.showMessage("Nessuna località disponibile nel sistema. Inseriscine almeno una prima di creare un itinerario.");
+            return;
+        }
+
+        // 2. Chiama il nuovo metodo della View che gestisce la raccolta dati
+        Itinerario nuovoItinerario = view.getNewItinerarioDetails(luoghiDisponibili);
+
+        // 3. Esegui il DAO per salvare il nuovo itinerario
+        try {
+            new InsertItinerarioDAO(nuovoItinerario).execute();
+            view.showMessage("=> Itinerario-modello '" + nuovoItinerario.getTitolo() + "' creato con successo!");
+        } catch (SQLException e) {
+            // Gestisce in modo specifico l'errore del DB sul limite di 7 giorni
+            if (e.getMessage().contains("La durata totale dell'itinerario non può superare i 7 giorni")) {
+                view.printError(new Exception("La durata totale delle tappe non può superare 7 giorni."));
+            } else {
+                throw e; // Rilancia altri errori SQL
+            }
+        }
     }
+
+
+    // =================================================================
+    // METODI ESISTENTI (INVARIATI)
+    // =================================================================
 
     private void insertNewPlace() throws SQLException, IOException {
         view.showMessage("\n--- Inserimento Nuova Località ---");
@@ -171,12 +203,10 @@ public class SegreteriaController {
     }
 
     private void generateReports() throws SQLException, IOException {
-
         int tripId = view.getTripId();
         TripReport report = new ReportDAO(tripId).execute();
 
         if (report != null) {
-            view.showMessage("\n--- Report per il Viaggio #" + tripId + " ---");
             view.showMessage(report.toString());
         } else {
             view.showMessage("Impossibile generare il report per il viaggio con ID: " + tripId);
@@ -240,14 +270,11 @@ public class SegreteriaController {
 
     private void assignHotelForOvernightStay() throws SQLException, IOException {
         view.showMessage("\n--- Assegnazione Alberghi (Sessione Interattiva) ---");
-
-        // 1. CHIEDI L'ID DEL VIAGGIO (UNA SOLA VOLTA ALL'INIZIO)
         int tripId = view.getTripId();
         int participantsCount = new GetParticipantCountDAO(tripId).execute();
         view.showMessage("=> Gestione Viaggio #" + tripId + " | Partecipanti: " + participantsCount);
 
         while (true) {
-            // 2. AD OGNI GIRO, MOSTRA LO STATO AGGIORNATO DEI PERNOTTAMENTI
             List<OvernightStay> overnightStays = new TripDetailsDAO(tripId).execute();
             if (overnightStays.isEmpty()) {
                 view.showMessage("Nessun pernottamento trovato per questo viaggio.");
@@ -257,39 +284,34 @@ public class SegreteriaController {
             view.printObjects(overnightStays);
             view.showMessage("--------------------------------------------------");
 
-            // 3. CHIEDI QUALE PERNOTTAMENTO GESTIRE O SE USCIRE
             String input = view.getInput("Inserisci l'ID del pernottamento a cui assegnare un albergo (o 'fine' per terminare): ");
             if (input.equalsIgnoreCase("fine")) {
-                break; // L'utente ha finito, esci dal ciclo
+                break;
             }
 
             int pernottamentoId = Integer.parseInt(input);
 
-            // Trova la località del pernottamento scelto
             Optional<OvernightStay> targetStay = overnightStays.stream()
                     .filter(os -> os.getId() == pernottamentoId)
                     .findFirst();
 
             if (targetStay.isEmpty()) {
                 view.showMessage("ERRORE: ID pernottamento non valido.");
-                continue; // Torna all'inizio del ciclo
+                continue;
             }
             String location = targetStay.get().getLocalita();
 
-            // 4. MOSTRA GLI ALBERGHI ADATTI IN QUELLA LOCALITÀ
             List<Hotel> availableHotels = new ListAvailableHotelsDAO(tripId, location).execute();
             if (availableHotels.isEmpty()) {
                 view.showMessage("ATTENZIONE: Nessun albergo con capienza sufficiente trovato in '" + location + "'.");
-                continue; // Torna all'inizio del ciclo
+                continue;
             }
             view.showMessage("Alberghi disponibili in '" + location + "' con capienza sufficiente:");
             view.printObjects(availableHotels);
             view.showMessage("--------------------------------------------------");
 
-            // 5. CHIEDI QUALE ALBERGO ASSEGNARE
             int hotelCode = view.getHotelCode();
 
-            // Esegui l'assegnazione
             new AssignHotelDAO(pernottamentoId, hotelCode).execute();
             view.showMessage("=> Albergo con codice " + hotelCode + " assegnato con successo al pernottamento #" + pernottamentoId);
         }
@@ -306,11 +328,7 @@ public class SegreteriaController {
 
     private void cancelBooking() throws SQLException, IOException {
         view.showMessage("\n--- Gestione/Cancellazione Prenotazioni Cliente ---");
-
-        // 1. La segreteria inserisce l'email del cliente da cercare
         String clientEmail = view.getClientEmail();
-
-        // 2. Usa lo STESSO DAO del cliente per recuperare le prenotazioni
         List<BookingDetails> clientBookings = new ListClientBookingsDAO(clientEmail).execute();
 
         if (clientBookings.isEmpty()) {
@@ -321,14 +339,12 @@ public class SegreteriaController {
         view.showMessage("Prenotazioni attive per " + clientEmail + ":");
         view.printObjects(clientBookings);
 
-        // 3. La segreteria sceglie quale prenotazione cancellare
         int bookingCodeToCancel = view.getBookingCodeToCancel();
         if (bookingCodeToCancel <= 0) {
             view.showMessage("Operazione annullata.");
             return;
         }
 
-        // 4. Usa il DAO esistente per la cancellazione
         new CancelBookingDAO(bookingCodeToCancel).execute();
         view.showMessage("Prenotazione con codice " + bookingCodeToCancel + " cancellata con successo.");
     }
