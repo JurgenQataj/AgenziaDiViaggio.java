@@ -76,7 +76,7 @@ public class ClienteController {
     private void cancelBooking() throws SQLException, IOException {
         view.showMessage("\n--- Cancella una Prenotazione ---");
 
-        // 1. Usa il nuovo DAO per recuperare e mostrare le prenotazioni del cliente loggato
+        //recuperare e mostrare le prenotazioni del cliente loggato
         List<BookingDetails> myBookings = new ListClientBookingsDAO(this.clientEmail).execute();
 
         if (myBookings.isEmpty()) {
@@ -87,14 +87,14 @@ public class ClienteController {
         view.showMessage("Le tue prenotazioni attive:");
         view.printObjects(myBookings);
 
-        // 2. Chiedi quale prenotazione cancellare
+        // Chiedi quale prenotazione cancellare
         int bookingCodeToCancel = view.getBookingCodeToCancel();
         if (bookingCodeToCancel <= 0) {
             view.showMessage("Cancellazione annullata.");
             return;
         }
 
-        // 3. Esegui la cancellazione usando il DAO esistente
+        // Esegui la cancellazione usando il DAO esistente
         new CancelBookingDAO(bookingCodeToCancel).execute();
         view.showMessage("Prenotazione con codice " + bookingCodeToCancel + " cancellata con successo.");
     }

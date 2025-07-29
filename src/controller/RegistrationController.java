@@ -16,17 +16,17 @@ public class RegistrationController {
     public void start() {
         view.showIntroMessage();
         try {
-            // La View si occupa di chiedere i dati e ci restituisce un oggetto User completo
+            // La View cii chiedere i dati e ci restituisce un oggetto User completo
             User newUser = view.getNewUserDetails();
 
-            // Il DAO ora riceve l'oggetto User, rendendo il codice più pulito
+            // Il DAO ora riceve l'oggetto User
             new RegistrationDAO(newUser).execute();
 
             view.showSuccessMessage();
 
         } catch (SQLException e) {
-            // Gestisce errori comuni, come email o telefono già esistenti
-            if (e.getErrorCode() == 1062) { // Codice errore MySQL per duplicato
+            // Gestisco errori comuni
+            if (e.getErrorCode() == 1062) {
                 view.showErrorMessage("Un utente con questa email o numero di telefono è già registrato.");
             } else {
                 view.showErrorMessage("Errore del database durante la registrazione: " + e.getMessage());

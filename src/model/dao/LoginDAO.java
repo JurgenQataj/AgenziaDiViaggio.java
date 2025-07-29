@@ -15,13 +15,6 @@ public class LoginDAO implements BaseDAO {
         this.credentials = credentials;
     }
 
-    /**
-     * Esegue la stored procedure 'login' per autenticare l'utente.
-     * Utilizza le credenziali fornite nel costruttore.
-     * @return Il 'Role' dell'utente (CLIENTE o SEGRETERIA) in caso di successo,
-     * altrimenti 'null' se le credenziali non sono valide.
-     * @throws SQLException in caso di errori di connessione al database.
-     */
     @Override
     public Role execute() throws SQLException {
         Connection conn = null;

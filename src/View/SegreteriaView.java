@@ -44,17 +44,6 @@ public class SegreteriaView {
         }
     }
 
-    // =================================================================
-    // NUOVI METODI PER CREAZIONE ITINERARIO E VIAGGIO
-    // =================================================================
-
-    /**
-     * Guida l'utente nella creazione di un nuovo itinerario-modello.
-     * Raccoglie titolo, costo e una lista di tappe in modo interattivo.
-     * @param luoghiDisponibili La lista delle località disponibili per le tappe.
-     * @return Un oggetto Itinerario completo, pronto per essere salvato.
-     * @throws IOException
-     */
     public Itinerario getNewItinerarioDetails(List<Place> luoghiDisponibili) throws IOException {
         System.out.println("\n--- Creazione Nuovo Itinerario-Modello ---");
         System.out.print("Inserisci il titolo del nuovo itinerario: ");
@@ -111,13 +100,7 @@ public class SegreteriaView {
         return new Itinerario(titolo, costo, tappe);
     }
 
-    /**
-     * Chiede all'utente di selezionare un itinerario e di inserire una data di partenza.
-     * @param itinerariDisponibili La lista di itinerari tra cui scegliere.
-     * @return Un oggetto Trip con l'ID dell'itinerario e la data di partenza impostati.
-     * @throws IOException
-     * @throws ParseException
-     */
+
     public Trip getNewTripDetails(List<Itinerario> itinerariDisponibili) throws IOException, ParseException {
         System.out.println("\n--- Creazione Nuovo Viaggio da Itinerario ---");
         if (itinerariDisponibili == null || itinerariDisponibili.isEmpty()) {
@@ -140,10 +123,6 @@ public class SegreteriaView {
 
         return trip;
     }
-
-    // =================================================================
-    // METODI ESISTENTI (INVARIATI O CON PICCOLE MODIFICHE)
-    // =================================================================
 
     public String getInput(String message) throws IOException {
         System.out.print(message);
@@ -246,8 +225,6 @@ public class SegreteriaView {
 
         return new Hotel(0, nome, referente, capienza, via, civico, cp, email, telefono, fax, selectedPlace.get(), costoNotte);
     }
-
-    // Metodi per l'assegnazione di bus e hotel (invariati)
 
     public List<String> getBusPlates() throws IOException {
         System.out.print("Inserisci le targhe degli autobus da assegnare (separate da una virgola): ");

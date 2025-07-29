@@ -22,7 +22,6 @@ public class SegreteriaController {
         this.view = new SegreteriaView();
     }
 
-    // Inserisci questa versione nel tuo file src/controller/SegreteriaController.java
 
     public void start() {
         ConnectionFactory.changeRole(Role.SEGRETERIA);
@@ -51,27 +50,23 @@ public class SegreteriaController {
                     }
                     default -> view.showMessage("Opzione non valida. Riprova.");
                 }
-                // --- BLOCCO CATCH MODIFICATO ---
+
             } catch (SQLException e) {
-                // Se l'eccezione è una SQLException (dal database), mostra solo il messaggio.
-                // Questo gestisce elegantemente le regole di business come la chiusura delle prenotazioni.
+
                 view.showMessage("ERRORE: " + e.getMessage());
             } catch (IOException | ParseException | NumberFormatException e) {
                 // Gestisce errori di input comuni senza mostrare dettagli tecnici.
                 view.showMessage("ERRORE DI INPUT: Controlla i dati inseriti e riprova. (" + e.getMessage() + ")");
             } catch (Exception e) {
-                // Gestisce tutti gli altri errori imprevisti e mostra i dettagli per il debug.
+                // Gestisco gli altri errori imprevisti e mostra i dettagli per il debug.
                 view.showMessage("Si è verificato un errore inaspettato.");
-                view.printError(e); // Mostra lo stack trace solo per errori gravi
+                view.printError(e); //  stack trace solo per errori gravi
             }
-            // --- FINE MODIFICA ---
+
         }
     }
 
-    /**
-     * Gestisce la creazione di un nuovo viaggio.
-     * Utilizza il nuovo metodo della View per selezionare un itinerario e una data di partenza.
-     */
+
     private void createTrip() throws SQLException, IOException, ParseException {
         view.showMessage("\n--- Creazione Nuovo Viaggio da Itinerario ---");
         List<Itinerario> itinerariDisponibili = new ListItinerariDAO().execute();
@@ -80,22 +75,19 @@ public class SegreteriaController {
             return;
         }
 
-        // 1. Chiama il nuovo metodo della View che gestisce l'interazione
+
         Trip tripDetails = view.getNewTripDetails(itinerariDisponibili);
 
-        // L'utente potrebbe aver annullato l'operazione nella view
         if (tripDetails == null) {
             view.showMessage("Creazione viaggio annullata.");
             return;
         }
 
-        // 2. Estrai i dati dall'oggetto Trip e chiama il DAO
         int itinerarioId = tripDetails.getItinerarioId();
         Date sqlStartDate = new Date(tripDetails.getDataPartenza().getTime());
 
         int nuovoViaggioId = new InsertTripDAO(itinerarioId, sqlStartDate).execute();
 
-        // 3. Mostra il risultato. Tutta la logica di creazione dei pernottamenti è ora nel DB.
         if (nuovoViaggioId != -1) {
             view.showMessage("=> Viaggio creato con successo con ID: " + nuovoViaggioId);
             view.showMessage("I pernottamenti sono stati generati automaticamente.");
@@ -105,10 +97,6 @@ public class SegreteriaController {
         view.showMessage("--- Creazione Viaggio Completata ---");
     }
 
-    /**
-     * Gestisce la creazione di un nuovo itinerario-modello.
-     * Utilizza il nuovo metodo interattivo della View per costruire l'itinerario con le sue tappe.
-     */
     private void createItinerario() throws SQLException, IOException {
         // 1. Recupera le località disponibili da mostrare all'utente
         List<Place> luoghiDisponibili = new ListPlacesDAO().execute();
@@ -117,27 +105,20 @@ public class SegreteriaController {
             return;
         }
 
-        // 2. Chiama il nuovo metodo della View che gestisce la raccolta dati
         Itinerario nuovoItinerario = view.getNewItinerarioDetails(luoghiDisponibili);
 
-        // 3. Esegui il DAO per salvare il nuovo itinerario
         try {
             new InsertItinerarioDAO(nuovoItinerario).execute();
             view.showMessage("=> Itinerario-modello '" + nuovoItinerario.getTitolo() + "' creato con successo!");
         } catch (SQLException e) {
-            // Gestisce in modo specifico l'errore del DB sul limite di 7 giorni
+
             if (e.getMessage().contains("La durata totale dell'itinerario non può superare i 7 giorni")) {
                 view.printError(new Exception("La durata totale delle tappe non può superare 7 giorni."));
             } else {
-                throw e; // Rilancia altri errori SQL
+                throw e;
             }
         }
     }
-
-
-    // =================================================================
-    // METODI ESISTENTI (INVARIATI)
-    // =================================================================
 
     private void insertNewPlace() throws SQLException, IOException {
         view.showMessage("\n--- Inserimento Nuova Località ---");
@@ -225,46 +206,57 @@ public class SegreteriaController {
         view.showMessage("=> Viaggio #" + tripId + " | Partecipanti da trasportare: " + participantsCount);
         view.showMessage("--------------------------------------------------");
 
-        List<Autobus> availableBuses = new ListAvailableBusesDAO(tripId).execute();
-        if (availableBuses.isEmpty()) {
-            view.showMessage("ATTENZIONE: Nessun autobus disponibile per le date di questo viaggio.");
-            return;
-        }
-        view.showMessage("Autobus disponibili per le date del viaggio:");
-        view.printObjects(availableBuses);
-        view.showMessage("--------------------------------------------------");
-
-        int capacityCovered = 0;
-
         while (true) {
+
+            List<Autobus> assignedBuses = new ListAssignedBusesDAO(tripId).execute();
+            List<Autobus> availableBuses = new ListAvailableBusesDAO(tripId).execute();
+
+            // 2. Ricalcola la capienza coperta in base ai dati aggiornati
+            int capacityCovered = assignedBuses.stream().mapToInt(Autobus::getCapienza).sum();
+
+
             view.showMessage("Stato attuale -> Capienza coperta: " + capacityCovered + " / " + participantsCount);
+            if (!assignedBuses.isEmpty()) {
+                view.showMessage("Autobus già assegnati:");
+                view.printObjects(assignedBuses);
+            }
+            view.showMessage("--------------------------------------------------");
+
+            if (availableBuses.isEmpty()) {
+                view.showMessage("ATTENZIONE: Nessun altro autobus disponibile per le date di questo viaggio.");
+                break;
+            }
+            view.showMessage("Autobus ancora disponibili:");
+            view.printObjects(availableBuses);
+            view.showMessage("--------------------------------------------------");
+
             String targaInput = view.getInput("Inserisci la targa di un bus da aggiungere (o 'fine' per terminare): ");
 
             if (targaInput.equalsIgnoreCase("fine")) {
                 break;
             }
 
+            // Cerca il bus nella lista di quelli disponibili
             Optional<Autobus> busToAdd = availableBuses.stream()
                     .filter(b -> b.getTarga().equalsIgnoreCase(targaInput))
                     .findFirst();
 
             if (busToAdd.isPresent()) {
-                Autobus bus = busToAdd.get();
-                new AssignBusDAO(tripId, bus.getTarga()).execute();
-                view.showMessage("=> Autobus " + bus.getTarga() + " assegnato!");
-
-                availableBuses.remove(bus);
-                capacityCovered += bus.getCapienza();
+                // Se trovato, esegui l'assegnazione nel database
+                new AssignBusDAO(tripId, targaInput).execute();
+                view.showMessage("=> Autobus " + targaInput + " assegnato!");
             } else {
-                view.showMessage("ERRORE: La targa non è valida o l'autobus è già stato assegnato in questa sessione.");
+                view.showMessage("ERRORE: La targa non è valida o l'autobus non è disponibile.");
             }
         }
 
+
+        int finalCapacity = new ListAssignedBusesDAO(tripId).execute().stream().mapToInt(Autobus::getCapienza).sum();
         view.showMessage("\n--- Assegnazione Completata ---");
-        if (capacityCovered < participantsCount) {
-            view.showMessage("ATTENZIONE: La capienza totale (" + capacityCovered + ") è inferiore al numero di partecipanti (" + participantsCount + ").");
+        if (finalCapacity < participantsCount) {
+            view.showMessage("ATTENZIONE: La capienza totale (" + finalCapacity + ") è inferiore al numero di partecipanti (" + participantsCount + ").");
         } else {
-            view.showMessage("Successo! Capienza coperta: " + capacityCovered + " posti per " + participantsCount + " partecipanti.");
+            view.showMessage("Successo! Capienza coperta: " + finalCapacity + " posti per " + participantsCount + " partecipanti.");
         }
     }
 

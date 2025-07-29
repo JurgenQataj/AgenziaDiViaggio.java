@@ -27,19 +27,17 @@ public class ClienteView {
         }
     }
 
-    // Metodo per chiedere l'ID di un viaggio da prenotare
     public int getTripIdToBook() throws IOException {
         System.out.print("Inserisci l'ID del viaggio che vuoi prenotare: ");
         return Integer.parseInt(reader.readLine());
     }
 
-    // Metodo per chiedere il numero di persone per una prenotazione
     public int getNumberOfParticipants() throws IOException {
         System.out.print("Per quante persone vuoi prenotare? ");
         return Integer.parseInt(reader.readLine());
     }
 
-    // Metodo per chiedere il codice di una prenotazione da cancellare
+
     public int getBookingCodeToCancel() throws IOException {
         System.out.print("Inserisci il codice della prenotazione da cancellare (o 0 per annullare): ");
         try {

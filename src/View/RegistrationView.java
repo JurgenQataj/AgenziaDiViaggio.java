@@ -29,7 +29,6 @@ public class RegistrationView {
         System.out.print("Telefono: ");
         String telefono = reader.readLine();
 
-        // Di default, tutti i nuovi utenti sono clienti
         return new User(nome, cognome, email, password, telefono);
     }
 
