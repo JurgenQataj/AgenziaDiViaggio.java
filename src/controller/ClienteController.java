@@ -15,10 +15,10 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
-public class ClienteController {
+public class ClienteController implements Controller {
 
     private final ClienteView view;
-    private final AppController appController;
+    private final AppController appController; // Riferimento per il logout
     private final String clientEmail;
 
     public ClienteController(AppController appController, String clientEmail) {
@@ -27,6 +27,7 @@ public class ClienteController {
         this.view = new ClienteView();
     }
 
+    @Override
     public void start() {
         ConnectionFactory.changeRole(Role.CLIENTE);
         boolean running = true;
@@ -44,8 +45,8 @@ public class ClienteController {
                         cancelBooking();
                         break;
                     case 4:
-                        appController.logout();
-                        running = false;
+                        appController.logout(); // Chiama il logout sull'AppController
+                        running = false; // Esce dal suo ciclo
                         break;
                     default:
                         view.showMessage("Opzione non valida.");
@@ -76,7 +77,6 @@ public class ClienteController {
     private void cancelBooking() throws SQLException, IOException {
         view.showMessage("\n--- Cancella una Prenotazione ---");
 
-        //recuperare e mostrare le prenotazioni del cliente loggato
         List<BookingDetails> myBookings = new ListClientBookingsDAO(this.clientEmail).execute();
 
         if (myBookings.isEmpty()) {
@@ -87,14 +87,12 @@ public class ClienteController {
         view.showMessage("Le tue prenotazioni attive:");
         view.printObjects(myBookings);
 
-        // Chiedi quale prenotazione cancellare
         int bookingCodeToCancel = view.getBookingCodeToCancel();
         if (bookingCodeToCancel <= 0) {
             view.showMessage("Cancellazione annullata.");
             return;
         }
 
-        // Esegui la cancellazione usando il DAO esistente
         new CancelBookingDAO(bookingCodeToCancel).execute();
         view.showMessage("Prenotazione con codice " + bookingCodeToCancel + " cancellata con successo.");
     }

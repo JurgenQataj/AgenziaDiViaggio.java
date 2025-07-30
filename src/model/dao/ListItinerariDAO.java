@@ -1,9 +1,5 @@
-// ↓↓↓↓↓↓↓↓↓↓↓↓ ECCO LA RIGA MANCANTE E FONDAMENTALE ↓↓↓↓↓↓↓↓↓↓↓↓
 package model.dao;
-// ↑↑↑↑↑↑↑↑↑↑↑↑ FINE DELLA CORREZIONE ↑↑↑↑↑↑↑↑↑↑↑↑
-
 import model.Itinerario;
-// Non serve importare BaseDAO o ConnectionFactory se sono nello stesso pacchetto
 
 import java.sql.CallableStatement;
 import java.sql.Connection;
@@ -12,10 +8,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO per recuperare l'elenco di tutti gli itinerari dal database
- * utilizzando la stored procedure list_itineraries.
- */
 public class ListItinerariDAO implements BaseDAO<List<Itinerario>> {
 
     @Override
@@ -54,7 +46,7 @@ public class ListItinerariDAO implements BaseDAO<List<Itinerario>> {
         if (rs != null) {
             try {
                 rs.close();
-            } catch (SQLException e) { /* Ignora */ }
+            } catch (SQLException e) {/*  */  }
         }
     }
 
@@ -62,7 +54,7 @@ public class ListItinerariDAO implements BaseDAO<List<Itinerario>> {
         if (cs != null) {
             try {
                 cs.close();
-            } catch (SQLException e) { /* Ignora */ }
+            } catch (SQLException e) {/*  */ }
         }
     }
 
@@ -70,7 +62,7 @@ public class ListItinerariDAO implements BaseDAO<List<Itinerario>> {
         if (conn != null) {
             try {
                 conn.close();
-            } catch (SQLException e) { /* Ignora */ }
+            } catch (SQLException e) { /*  */ }
         }
     }
 }

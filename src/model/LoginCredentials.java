@@ -9,18 +9,10 @@ public class LoginCredentials {
         this.password = password;
     }
 
-    /**
-     * Restituisce l'email per queste credenziali.
-     * @return una Stringa contenente l'email.
-     */
     public String getEmail() {
         return email;
     }
 
-    /**
-     * Restituisce la password per queste credenziali.
-     * @return una Stringa contenente la password.
-     */
     public String getPassword() {
         return password;
     }

@@ -8,18 +8,12 @@ public class CancelBookingDAO implements BaseDAO<Void> {
 
     private final int bookingCode;
 
-    /**
-     * Questo è il nuovo costruttore che risolve l'errore.
-     * Accetta il codice della prenotazione da cancellare.
-     * @param bookingCode Il codice univoco della prenotazione.
-     */
     public CancelBookingDAO(int bookingCode) {
         this.bookingCode = bookingCode;
     }
 
     @Override
     public Void execute() throws SQLException {
-        // Chiama la procedura "cancel_booking" dal tuo dump SQL
         final String procedure = "{CALL cancel_booking(?)}";
 
         try (Connection conn = ConnectionFactory.getConnection();
@@ -29,6 +23,6 @@ public class CancelBookingDAO implements BaseDAO<Void> {
             cs.setInt(1, this.bookingCode);
             cs.execute();
         }
-        return null; // Il metodo non restituisce nulla
+        return null;
     }
 }

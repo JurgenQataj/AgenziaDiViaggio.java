@@ -1,71 +1,78 @@
 package controller;
 
-import model.LoginResult; // <-- IMPORT AGGIUNTO (LA SOLUZIONE)
+import model.LoginResult;
 import model.Role;
-import model.dao.ConnectionFactory;
 import java.util.Scanner;
 
 public class AppController {
 
     private final Scanner scanner;
-    private boolean userLoggedIn = false;
+    private LoginResult currentUser = null; // Memorizza chi è l'utente loggato
 
     public AppController() {
         this.scanner = new Scanner(System.in);
     }
 
     public void start() {
-        while (true) {
-            // This loop ensures the menu is always shown after a controller (like Segreteria or Cliente) finishes.
-            if (!userLoggedIn) {
-                showMainMenu();
+        boolean running = true;
+
+        while (running) {
+            if (currentUser == null) {
+
+                running = showMainMenu();
+            } else {
+
+                Controller userController;
+                if (currentUser.getRole() == Role.CLIENTE) {
+                    userController = new ClienteController(this, currentUser.getEmail());
+                } else {
+                    userController = new SegreteriaController(this);
+                }
+                userController.start();
             }
         }
+
+        System.out.println("Grazie per aver usato i nostri servizi. Arrivederci!");
     }
 
-    private void showMainMenu() {
+    private boolean showMainMenu() {
         System.out.println("\n--- BENVENUTO NELL'AGENZIA VIAGGI ---");
         System.out.println("1) Login");
         System.out.println("2) Registrati");
         System.out.println("3) Esci");
         System.out.print("Scegli un'opzione: ");
 
-        try {
-            int choice = Integer.parseInt(scanner.nextLine());
-            switch (choice) {
-                case 1:
-                    LoginController loginController = new LoginController(scanner, this);
-                    LoginResult result = loginController.login();
+        String choice = scanner.nextLine();
+        Controller selectedController = null;
 
-                    if (result != null && result.getRole() != null) {
-                        userLoggedIn = true;
-                        if (result.getRole() == Role.CLIENTE) {
-                            new ClienteController(this, result.getEmail()).start();
-                        } else if (result.getRole() == Role.SEGRETERIA) {
-                            new SegreteriaController(this).start();
-                        }
-                    }
-                    break;
-                case 2:
-                    new RegistrationController().start();
-                    break;
-                case 3:
-                    System.out.println("Arrivederci!");
-                    System.exit(0);
-                    break;
-                default:
-                    System.out.println("Opzione non valida.");
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("ERRORE: Inserisci un'opzione numerica.");
-        } catch (Exception e) {
-            System.out.println("ERRORE INASPETTATO: " + e.getMessage());
-            e.printStackTrace(); // Useful for debugging unexpected errors
+        switch (choice) {
+            case "1":
+                LoginController loginController = new LoginController();
+                this.currentUser = loginController.executeLogin();
+                if (currentUser == null) {
+                    System.out.println("ERRORE: Credenziali non valide. Riprova.");
+                }
+                break;
+            case "2":
+                selectedController = new RegistrationController();
+                break;
+            case "3":
+                // Se l'utente sceglie di uscire, restituisce false
+                return false;
+            default:
+                System.out.println("Opzione non valida. Riprova.");
+                break;
         }
+
+        if (selectedController != null) {
+            selectedController.start();
+        }
+
+        return true;
     }
 
     public void logout() {
-        this.userLoggedIn = false;
+        this.currentUser = null;
         System.out.println("\nSei stato disconnesso. Stai tornando al menu principale...");
     }
 }

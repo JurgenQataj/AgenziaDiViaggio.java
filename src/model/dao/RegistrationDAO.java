@@ -9,7 +9,6 @@ import java.sql.SQLException;
 public class RegistrationDAO {
     private final User user;
 
-    // Il costruttore ora accetta un singolo oggetto User
     public RegistrationDAO(User user) {
         this.user = user;
     }

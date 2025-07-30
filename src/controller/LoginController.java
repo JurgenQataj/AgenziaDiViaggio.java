@@ -1,42 +1,40 @@
 package controller;
 
+import View.LoginView;
+import exceptions.DatabaseException;
 import model.LoginCredentials;
 import model.LoginResult;
 import model.Role;
 import model.dao.LoginDAO;
 
-import java.sql.SQLException;
-import java.util.Scanner;
-
 public class LoginController {
 
-    private final Scanner scanner;
-    private final AppController appController;
+    private final LoginView view;
 
-    public LoginController(Scanner scanner, AppController appController) {
-        this.scanner = scanner;
-        this.appController = appController;
+    public LoginController() {
+        this.view = new LoginView();
     }
 
-    public LoginResult login() throws SQLException {
-        System.out.println("\n--- LOGIN ---");
-        System.out.print("Email: ");
-        String email = scanner.nextLine();
-        System.out.print("Password: ");
-        String password = scanner.nextLine();
+    public LoginResult executeLogin() {
+        LoginCredentials credentials = view.authenticate();
 
-        LoginCredentials credentials = new LoginCredentials(email, password);
-        LoginDAO loginDAO = new LoginDAO(credentials);
-
-        Role role = loginDAO.execute(); // Il DAO chiama la procedura nel DB
-
-        if (role != null) {
-            System.out.println("Login effettuato con successo. Ruolo: " + role);
-
-            return new LoginResult(email, role);
-        } else {
-            System.out.println("ERRORE: Credenziali non valide. Riprova.");
+        if (credentials.getEmail() == null || credentials.getEmail().isEmpty()) {
             return null;
         }
+
+        LoginDAO loginDAO = new LoginDAO(credentials);
+
+        try {
+            Role role = loginDAO.execute();
+            if (role != null) {
+                view.showMessage("Login effettuato con successo. Ruolo: " + role);
+                return new LoginResult(credentials.getEmail(), role);
+            }
+        } catch (DatabaseException e) {
+
+            view.printError(e);
+        }
+
+        return null;
     }
 }

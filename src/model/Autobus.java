@@ -11,7 +11,6 @@ public class Autobus {
         this.costoGiornaliero = costoGiornaliero;
     }
 
-    // Getters
     public String getTarga() {
         return targa;
     }

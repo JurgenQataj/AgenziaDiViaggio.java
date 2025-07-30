@@ -1,18 +1,15 @@
 package model;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class OvernightStay {
     private final int id;
     private final Date startDate;
     private final Date endDate;
-    private final String localita; // La località è una String, come nel DB
-    private final Integer hotelCode;
+    private final String localita;
+    private final Integer hotelCode; // Usiamo Integer per permettere il valore null
 
-    /**
-     * Costruttore completo per creare un oggetto Pernottamento.
-     * Accetta i dati così come vengono letti dal database.
-     */
     public OvernightStay(int id, Date startDate, Date endDate, String localita, Integer hotelCode) {
         this.id = id;
         this.startDate = startDate;
@@ -21,14 +18,6 @@ public class OvernightStay {
         this.hotelCode = hotelCode;
     }
 
-    /**
-     * Costruttore semplificato per creare nuove tappe (l'hotel è sconosciuto).
-     */
-    public OvernightStay(Date startDate, Date endDate, String localita) {
-        this(0, startDate, endDate, localita, null);
-    }
-
-    // Getters
     public int getId() { return id; }
     public Date getStartDate() { return startDate; }
     public Date getEndDate() { return endDate; }
@@ -37,12 +26,15 @@ public class OvernightStay {
 
     @Override
     public String toString() {
-        String hotelInfo = (hotelCode != null) ? "Albergo Codice: " + hotelCode : "Albergo non assegnato";
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+
+        String hotelInfo = (getHotelCode() != null) ? "Albergo Codice: " + getHotelCode() : "Albergo non assegnato";
+
         return String.format("Pernottamento #%d | dal %s al %s in '%s' | %s",
-                id,
-                new java.sql.Date(startDate.getTime()),
-                new java.sql.Date(endDate.getTime()),
-                localita,
+                getId(),
+                sdf.format(getStartDate()),
+                sdf.format(getEndDate()),
+                getLocalita(),
                 hotelInfo);
     }
 }

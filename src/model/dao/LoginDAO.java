@@ -1,51 +1,43 @@
 package model.dao;
 
+import exceptions.DatabaseException;
 import model.LoginCredentials;
 import model.Role;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Types;
 
-public class LoginDAO implements BaseDAO {
+public class LoginDAO {
+
     private final LoginCredentials credentials;
 
     public LoginDAO(LoginCredentials credentials) {
         this.credentials = credentials;
     }
 
-    @Override
-    public Role execute() throws SQLException {
-        Connection conn = null;
-        CallableStatement cs = null;
-        Role role = null; // Inizializza a null per gestire il login fallito
+    public Role execute() throws DatabaseException {
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            cs = conn.prepareCall("{CALL login(?, ?, ?)}");
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall("{CALL login(?, ?, ?)}")) {
 
-            // Ora questo codice funzionerà perché LoginCredentials ha i metodi getter
             cs.setString(1, credentials.getEmail());
             cs.setString(2, credentials.getPassword());
             cs.registerOutParameter(3, Types.INTEGER);
 
             cs.execute();
 
-            int roleCode = cs.getInt(3); // Legge il parametro di output
+            int roleCode = cs.getInt(3);
 
-            // Converte il codice numerico nel tipo Enum corretto
             if (roleCode == 0) {
-                role = Role.CLIENTE;
+                return Role.CLIENTE;
             } else if (roleCode == 1) {
-                role = Role.SEGRETERIA;
+                return Role.SEGRETERIA;
             }
-            // Se roleCode è -1 (o altro), 'role' rimane null
+            return null; // Login fallito
 
-        } finally {
-            if (cs != null) cs.close();
-            if (conn != null) conn.close();
+        } catch (SQLException e) {
+            throw new DatabaseException("Errore durante il tentativo di login.", e);
         }
-        return role;
     }
 }

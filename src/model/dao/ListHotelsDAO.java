@@ -13,7 +13,7 @@ import java.util.List;
 public class ListHotelsDAO implements BaseDAO<List<Hotel>> {
 
     public ListHotelsDAO() {
-        // Costruttore vuoto
+
     }
 
     @Override
@@ -27,8 +27,7 @@ public class ListHotelsDAO implements BaseDAO<List<Hotel>> {
             ResultSet rs = cs.executeQuery();
 
             while (rs.next()) {
-                // ***** QUESTA È LA RIGA CORRETTA *****
-                // Usiamo il nuovo costruttore di Place senza l'ID.
+
                 Place place = new Place(
                         rs.getString("localita"),
                         rs.getString("paese")

@@ -1,17 +1,13 @@
 package model;
 
 public class User {
-    private String nome;
-    private String cognome;
-    private String email;
-    private String password;
-    private String telefono;
-    private Role ruolo; // Il ruolo sarà gestito internamente, non chiesto all'utente
+    private final String nome;
+    private final String cognome;
+    private final String email;
+    private final String password;
+    private final String telefono;
+    private final Role ruolo;
 
-    /**
-     * Costruttore per la registrazione di un nuovo utente.
-     * Il ruolo viene impostato di default a CLIENTE.
-     */
     public User(String nome, String cognome, String email, String password, String telefono) {
         this.nome = nome;
         this.cognome = cognome;
@@ -21,7 +17,6 @@ public class User {
         this.ruolo = Role.CLIENTE; // I nuovi utenti sono sempre clienti
     }
 
-    // --- GETTERS ---
     public String getNome() {
         return nome;
     }
@@ -41,33 +36,16 @@ public class User {
     public String getTelefono() {
         return telefono;
     }
-
     public Role getRuolo() {
         return ruolo;
     }
 
-    // --- SETTERS ---
-    public void setNome(String nome) {
-        this.nome = nome;
+    public String toString() {
+        return "Utente [Email: " + email +
+                ", Nome: " + nome +
+                " " + cognome +
+                ", Telefono: " + telefono +
+                ", Ruolo: " + getRuolo() + "]";
     }
 
-    public void setCognome(String cognome) {
-        this.cognome = cognome;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public void setRuolo(Role ruolo) {
-        this.ruolo = ruolo;
-    }
 }

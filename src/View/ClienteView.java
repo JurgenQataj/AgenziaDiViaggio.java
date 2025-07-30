@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class ClienteView {
+public class ClienteView extends View {
     private final BufferedReader reader;
 
     public ClienteView() {
@@ -23,7 +23,7 @@ public class ClienteView {
         try {
             return Integer.parseInt(reader.readLine());
         } catch (NumberFormatException e) {
-            return -1;
+            return -1; // Ritorna un valore non valido se l'input non è un numero
         }
     }
 
@@ -37,31 +37,13 @@ public class ClienteView {
         return Integer.parseInt(reader.readLine());
     }
 
-
     public int getBookingCodeToCancel() throws IOException {
         System.out.print("Inserisci il codice della prenotazione da cancellare (o 0 per annullare): ");
         try {
             return Integer.parseInt(reader.readLine());
         } catch (NumberFormatException e) {
-            return -1;
+            return -1; // Ritorna un valore non valido
         }
     }
 
-    public void showMessage(String message) {
-        System.out.println(message);
-    }
-
-    public <T> void printObjects(java.util.List<T> objects) {
-        if (objects == null || objects.isEmpty()) {
-            System.out.println("Nessun risultato da mostrare.");
-            return;
-        }
-        for (T obj : objects) {
-            System.out.println(obj.toString());
-        }
-    }
-
-    public void printError(Exception e) {
-        System.out.println("ERRORE: " + e.getMessage());
-    }
 }

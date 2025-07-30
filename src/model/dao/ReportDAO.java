@@ -2,16 +2,12 @@ package model.dao;
 
 import model.OvernightStay;
 import model.TripReport;
-
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-/**
- * DAO per generare un report finanziario e di dettaglio per un viaggio specifico.
- */
 public class ReportDAO implements BaseDAO<TripReport> {
 
     private final int tripId;
@@ -22,7 +18,8 @@ public class ReportDAO implements BaseDAO<TripReport> {
 
     @Override
     public TripReport execute() throws SQLException {
-        TripReport report = null;
+
+        TripReport report;
         final String procedure = "{CALL report(?)}";
 
         try (Connection conn = ConnectionFactory.getConnection()) {
@@ -30,7 +27,6 @@ public class ReportDAO implements BaseDAO<TripReport> {
             int partecipanti = 0;
             double guadagnoOPerdita = 0.0;
 
-            // 1. Esegui la procedura per ottenere i dati finanziari
             try (CallableStatement cs = conn.prepareCall(procedure)) {
                 cs.setInt(1, this.tripId);
                 try (ResultSet rs = cs.executeQuery()) {
@@ -42,10 +38,8 @@ public class ReportDAO implements BaseDAO<TripReport> {
                 }
             }
 
-            // 2. Recupera la lista dei pernottamenti
             List<OvernightStay> pernottamenti = new TripDetailsDAO(this.tripId).execute();
 
-            // 3. Crea l'oggetto TripReport completo con tutti i dati
             report = new TripReport(titoloViaggio, partecipanti, guadagnoOPerdita, pernottamenti);
         }
         return report;

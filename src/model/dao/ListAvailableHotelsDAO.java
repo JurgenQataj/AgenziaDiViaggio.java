@@ -5,10 +5,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Recupera la lista degli hotel disponibili per una data località
- * che hanno una capienza sufficiente a ospitare tutti i partecipanti di un viaggio.
- */
 public class ListAvailableHotelsDAO {
     private final int tripId;
     private final String location;

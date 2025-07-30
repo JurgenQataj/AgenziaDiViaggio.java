@@ -26,7 +26,7 @@ public class ConnectionFactory {
             System.err.println("Errore durante il caricamento del file db.properties");
             e.printStackTrace();
         }
-        // --- FINE CORREZIONE ---
+
     }
 
     public static void changeRole(Role role) {
@@ -36,7 +36,7 @@ public class ConnectionFactory {
     public static Connection getConnection() throws SQLException {
         String dbUrl = props.getProperty("db.url");
         if (dbUrl == null || dbUrl.isEmpty()) {
-            // Questo controllo aggiuntivo ci aiuta a dare un errore più chiaro
+
             throw new SQLException("La URL del database non è stata trovata in db.properties.");
         }
 

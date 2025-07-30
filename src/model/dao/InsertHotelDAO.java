@@ -5,7 +5,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class InsertHotelDAO implements BaseDAO {
+public class InsertHotelDAO implements BaseDAO<Void> {
     private final Hotel hotel;
 
     public InsertHotelDAO(Hotel hotel) {
@@ -14,12 +14,9 @@ public class InsertHotelDAO implements BaseDAO {
 
     @Override
     public Void execute() throws SQLException {
-        Connection conn = null;
-        CallableStatement cs = null;
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            cs = conn.prepareCall("{CALL new_hotel(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}");
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall("{CALL new_hotel(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
             cs.setString(1, hotel.getNome());
             cs.setString(2, hotel.getReferente());
@@ -35,9 +32,6 @@ public class InsertHotelDAO implements BaseDAO {
 
             cs.execute();
 
-        } finally {
-            if (cs != null) cs.close();
-            if (conn != null) conn.close();
         }
         return null;
     }

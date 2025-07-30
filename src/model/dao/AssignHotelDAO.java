@@ -24,6 +24,6 @@ public class AssignHotelDAO implements BaseDAO<Void> {
             cs.setInt(2, this.hotelCode);
             cs.execute();
         }
-        return null; // Il metodo non restituisce nulla
+        return null;
     }
 }

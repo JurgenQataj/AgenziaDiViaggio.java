@@ -5,7 +5,7 @@ import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-public class InsertBusDAO implements BaseDAO {
+public class InsertBusDAO implements BaseDAO<Void> {
     private final Autobus autobus;
 
     public InsertBusDAO(Autobus autobus) {
@@ -14,12 +14,9 @@ public class InsertBusDAO implements BaseDAO {
 
     @Override
     public Void execute() throws SQLException {
-        Connection conn = null;
-        CallableStatement cs = null;
 
-        try {
-            conn = ConnectionFactory.getConnection();
-            cs = conn.prepareCall("{CALL create_bus(?, ?, ?)}");
+        try (Connection conn = ConnectionFactory.getConnection();
+             CallableStatement cs = conn.prepareCall("{CALL create_bus(?, ?, ?)}")) {
 
             cs.setString(1, autobus.getTarga());
             cs.setInt(2, autobus.getCapienza());
@@ -27,10 +24,8 @@ public class InsertBusDAO implements BaseDAO {
 
             cs.execute();
 
-        } finally {
-            if (cs != null) cs.close();
-            if (conn != null) conn.close();
         }
+
         return null;
     }
 }

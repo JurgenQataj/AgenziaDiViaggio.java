@@ -1,6 +1,7 @@
 package exceptions;
 
-public class DatabaseException extends Exception {
+// Modifica "Exception" in "RuntimeException"
+public class DatabaseException extends RuntimeException {
 
   public DatabaseException(String message) {
     super(message);

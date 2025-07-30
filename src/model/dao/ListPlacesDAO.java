@@ -12,7 +12,7 @@ import java.util.List;
 public class ListPlacesDAO implements BaseDAO<List<Place>> {
 
     public ListPlacesDAO() {
-        // Costruttore vuoto
+
     }
 
     @Override
@@ -26,7 +26,6 @@ public class ListPlacesDAO implements BaseDAO<List<Place>> {
             ResultSet rs = cs.executeQuery();
 
             while (rs.next()) {
-                // Usiamo il nuovo costruttore senza ID
                 Place place = new Place(
                         rs.getString("nome"),
                         rs.getString("paese")

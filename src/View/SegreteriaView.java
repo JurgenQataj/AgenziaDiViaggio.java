@@ -11,7 +11,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-public class SegreteriaView {
+public class SegreteriaView extends View {
     private final BufferedReader reader;
     private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
@@ -69,7 +69,6 @@ public class SegreteriaView {
                 break;
             }
 
-            // Validazione della località inserita
             boolean localitaValida = luoghiDisponibili.stream().anyMatch(p -> p.getNome().equalsIgnoreCase(nomeLocalita));
             if (!localitaValida) {
                 System.out.println("ERRORE: Località non valida. Riprova.");
@@ -99,8 +98,6 @@ public class SegreteriaView {
 
         return new Itinerario(titolo, costo, tappe);
     }
-
-
     public Trip getNewTripDetails(List<Itinerario> itinerariDisponibili) throws IOException, ParseException {
         System.out.println("\n--- Creazione Nuovo Viaggio da Itinerario ---");
         if (itinerariDisponibili == null || itinerariDisponibili.isEmpty()) {
@@ -114,37 +111,25 @@ public class SegreteriaView {
         System.out.print("Scegli l'ID dell'itinerario da usare: ");
         int itinerarioId = Integer.parseInt(reader.readLine());
 
+        Itinerario itinerarioScelto = itinerariDisponibili.stream()
+                .filter(i -> i.getId() == itinerarioId)
+                .findFirst()
+                .orElse(null);
+
+        if (itinerarioScelto == null) {
+            showMessage("ERRORE: ID Itinerario non valido.");
+            return null;
+        }
+
         System.out.print("Inserisci la data di partenza (YYYY-MM-DD): ");
         Date dataPartenza = sdf.parse(reader.readLine());
 
-        Trip trip = new Trip();
-        trip.setItinerarioId(itinerarioId);
-        trip.setDataPartenza(dataPartenza);
-
-        return trip;
+        return new Trip(0, dataPartenza, null, itinerarioScelto);
     }
 
     public String getInput(String message) throws IOException {
         System.out.print(message);
         return reader.readLine();
-    }
-
-    public void showMessage(String message) {
-        System.out.println(message);
-    }
-
-    public void printError(Exception e) {
-        System.out.println("ERRORE: " + e.getMessage());
-    }
-
-    public <T> void printObjects(List<T> objects) {
-        if (objects == null || objects.isEmpty()) {
-            System.out.println("Nessun risultato da mostrare.");
-            return;
-        }
-        for (T obj : objects) {
-            System.out.println(obj.toString());
-        }
     }
 
     public int getTripId() throws IOException {
@@ -243,4 +228,5 @@ public class SegreteriaView {
         System.out.print("Inserisci il codice dell'albergo da assegnare: ");
         return Integer.parseInt(reader.readLine());
     }
+
 }

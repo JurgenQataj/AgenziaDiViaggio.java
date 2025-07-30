@@ -4,10 +4,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class BookingDetails {
-    private int codice;
-    private int numeroPersone;
-    private String titoloViaggio;
-    private Date dataPartenza;
+    private final int codice;
+    private final int numeroPersone;
+    private final String titoloViaggio;
+    private final Date dataPartenza;
 
     public BookingDetails(int codice, int numeroPersone, String titoloViaggio, Date dataPartenza) {
         this.codice = codice;

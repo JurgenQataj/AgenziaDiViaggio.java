@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class RegistrationView {
+public class RegistrationView extends View {
     private final BufferedReader reader;
 
     public RegistrationView() {
@@ -33,10 +33,10 @@ public class RegistrationView {
     }
 
     public void showSuccessMessage() {
-        System.out.println("Registrazione effettuata con successo! Ora puoi effettuare il login.");
+        showMessage("Registrazione effettuata con successo! Ora puoi effettuare il login.");
     }
 
     public void showErrorMessage(String message) {
-        System.err.println("ERRORE: " + message);
+        printError(new Exception(message));
     }
 }

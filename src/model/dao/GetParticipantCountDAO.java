@@ -1,6 +1,4 @@
-// File: src/model/dao/GetParticipantCountDAO.java
 package model.dao;
-
 import java.sql.*;
 
 public class GetParticipantCountDAO {

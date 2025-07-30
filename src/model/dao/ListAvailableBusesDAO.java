@@ -5,11 +5,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Questo DAO recupera la lista degli autobus che sono disponibili
- * per un dato viaggio, escludendo quelli già assegnati a viaggi
- * con date sovrapposte.
- */
 public class ListAvailableBusesDAO {
     private final int tripId;
 
@@ -17,11 +12,6 @@ public class ListAvailableBusesDAO {
         this.tripId = tripId;
     }
 
-    /**
-     * Esegue la stored procedure 'list_available_buses_for_trip'.
-     * @return Una lista di oggetti Autobus disponibili.
-     * @throws SQLException
-     */
     public List<Autobus> execute() throws SQLException {
         List<Autobus> busList = new ArrayList<>();
 

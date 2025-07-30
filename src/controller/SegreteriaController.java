@@ -3,7 +3,6 @@ package controller;
 import View.SegreteriaView;
 import model.*;
 import model.dao.*;
-
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
@@ -12,17 +11,18 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-public class SegreteriaController {
+
+public class SegreteriaController implements Controller {
 
     private final SegreteriaView view;
-    private final AppController appController;
+    private final AppController appController; // Riferimento per il logout
 
     public SegreteriaController(AppController appController) {
         this.appController = appController;
         this.view = new SegreteriaView();
     }
 
-
+    @Override
     public void start() {
         ConnectionFactory.changeRole(Role.SEGRETERIA);
         boolean running = true;
@@ -45,27 +45,17 @@ public class SegreteriaController {
                     case 13 -> bookTrip();
                     case 14 -> cancelBooking();
                     case 15 -> {
-                        appController.logout();
-                        running = false;
+                        appController.logout(); // Chiama il logout sull'AppController
+                        running = false; // Esce dal suo ciclo
                     }
                     default -> view.showMessage("Opzione non valida. Riprova.");
                 }
-
-            } catch (SQLException e) {
+            } catch (Exception e) {
 
                 view.showMessage("ERRORE: " + e.getMessage());
-            } catch (IOException | ParseException | NumberFormatException e) {
-                // Gestisce errori di input comuni senza mostrare dettagli tecnici.
-                view.showMessage("ERRORE DI INPUT: Controlla i dati inseriti e riprova. (" + e.getMessage() + ")");
-            } catch (Exception e) {
-                // Gestisco gli altri errori imprevisti e mostra i dettagli per il debug.
-                view.showMessage("Si è verificato un errore inaspettato.");
-                view.printError(e); //  stack trace solo per errori gravi
             }
-
         }
     }
-
 
     private void createTrip() throws SQLException, IOException, ParseException {
         view.showMessage("\n--- Creazione Nuovo Viaggio da Itinerario ---");
@@ -84,7 +74,7 @@ public class SegreteriaController {
         }
 
         int itinerarioId = tripDetails.getItinerarioId();
-        Date sqlStartDate = new Date(tripDetails.getDataPartenza().getTime());
+        Date sqlStartDate = new Date(tripDetails.dataPartenza().getTime());
 
         int nuovoViaggioId = new InsertTripDAO(itinerarioId, sqlStartDate).execute();
 
@@ -211,7 +201,7 @@ public class SegreteriaController {
             List<Autobus> assignedBuses = new ListAssignedBusesDAO(tripId).execute();
             List<Autobus> availableBuses = new ListAvailableBusesDAO(tripId).execute();
 
-            // 2. Ricalcola la capienza coperta in base ai dati aggiornati
+            // Ricalcola la capienza coperta in base ai dati aggiornati
             int capacityCovered = assignedBuses.stream().mapToInt(Autobus::getCapienza).sum();
 
 

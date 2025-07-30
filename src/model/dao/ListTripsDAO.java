@@ -31,9 +31,8 @@ public class ListTripsDAO implements
 
             ResultSet rs = cs.getResultSet();
             while (rs.next()) {
-                // 1. Crea l'oggetto Itinerario con i dati recuperati
                 Itinerario itinerario = new Itinerario(
-                        0, // L'id dell'itinerario non è nel result set della proc, ma non è critico per la visualizzazione
+                        0,
                         rs.getString("titolo"),
                         rs.getFloat("costo_persona")
                 );
